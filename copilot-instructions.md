@@ -1,0 +1,449 @@
+Project Instructions & Guardrails
+
+## Tech Stack
+
+| Category | Technology |
+|----------|-----------|
+| Framework | Flutter >= 3.16.0 (Dart SDK >= 3.2.0 < 4.0.0) |
+| State Management | Riverpod (`flutter_riverpod` + `riverpod_annotation`) |
+| Immutability | Freezed (`freezed_annotation` + `freezed`) |
+| Serialization | JSON Serializable (`json_annotation` + `json_serializable`) |
+| Local Storage | Hive (`hive` + `hive_flutter` + `hive_generator`) |
+| Linting | `flutter_lints` (custom rules in `analysis_options.yaml`) |
+| Testing | Flutter test framework (`flutter_test`) |
+
+---
+
+## Architecture: Clean Architecture Layers
+
+The project follows strict **Clean Architecture** with four layers. Dependency direction is enforced at compile time via linter rules — **inner layers must never import outer layers**.
+
+```
+presentation/          ← UI, widgets, navigation, theme
+    ↓ (imports only)
+application/           ← Business logic, providers, use cases
+    ↓ (imports only)
+domain/                ← Entities, value objects, repositories interfaces
+    ↓ (imports only)
+infrastructure/        ← Storage implementations, external services
+```
+
+### Layer Responsibilities
+
+- **`lib/domain/`** — Pure business entities (`Item`, `Contact`, `Loan`), value objects (`RiskLevel`), and repository interfaces. No framework dependencies whatsoever.
+- **`lib/application/`** — Riverpod providers, business logic orchestration. Imports domain only.
+- **`lib/infrastructure/`** — Hive storage implementation, adapters. Imports domain and application as needed.
+- **`lib/presentation/`** — Flutter widgets, routing (`AppRouter`), theming (`AppTheme`). Imports everything else.
+
+### Layer Barrel Files
+
+Each layer has a barrel export file:
+- `lib/domain/domain.dart`
+- `lib/application/application.dart`
+- `lib/infrastructure/infrastructure.dart`
+
+Use these barrel imports in production code to keep import chains short and maintainable.
+
+---
+
+## Naming Conventions
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Classes / Enums | PascalCase | `Item`, `ItemStatus`, `LoanProvider` |
+| Variables / Functions | camelCase | `createdAt`, `getLoanedItems()` |
+| Files / Directories | snake_case | `dashboard_provider.dart`, `risk_level.dart` |
+| Constants | UPPER_SNAKE_CASE | `MAX_NAME_LENGTH` (if used) |
+| Private members | leading underscore | `_boxName`, `_validate()` |
+
+### Entity Field Naming
+
+- Use `id` for primary keys (Hive key format: `"item:{uuid}"`)
+- Use `createdAt` and `updatedAt` for timestamps
+- Nullable fields use `?` type annotation explicitly
+- Default values via constructor parameters, not `copyWith` defaults where possible
+
+---
+
+## Code Generation Rules
+
+All generated files live alongside their source with `.g.dart`, `.freezed.dart`, or `.hive_adapter.g.dart` extensions.
+
+### Mandatory Practices
+
+1. **Always run `build_runner`** after modifying:
+   - Freezed classes → generates `.freezed.dart`
+   - JSON-serializable classes → generates `.g.dart`
+   - Hive adapters → generates `.hive_adapter.g.dart`
+   - Riverpod providers with annotations → generates `.riverpod.dart`
+
+2. **Never manually edit generated files** — they are overwritten by `build_runner`.
+
+3. **Use `part 'file.dart';` and `part of` directives** correctly for partials.
+
+4. **Freezed classes**:
+   - Prefer `@freezed` over manual `copyWith`, `==`, `hashCode`
+   - Use named constructors for different factory patterns
+   - Annotate with `@JsonSerializable()` when serialization is needed
+
+5. **Hive adapters**:
+   - Register all adapters in `main.dart` before `runApp()`
+   - Hive key format: `"entity_type:{uuid}"` (e.g., `"item:{uuid}"`)
+   - Use `Hive.initFlutter()` in `main()` before any UI renders
+
+---
+
+## Riverpod Patterns
+
+- Providers live in `lib/application/providers/`
+- Use `@riverpod` annotation for auto-generated providers
+- Prefer `AsyncNotifierProvider` for async state, `StateNotifierProvider` for sync
+- Never hold `BuildContext` references in providers
+- Use `ref.watch()` / `ref.read()` / `ref.listen()` per Riverpod conventions
+
+---
+
+## Linting & Analysis Rules (from `analysis_options.yaml`)
+
+### Critical Rules (Never Violate)
+
+| Rule | Reason |
+|------|--------|
+| `avoid_relative_lib_imports: true` | Always use `package:` imports |
+| `always_use_package_imports: true` | Enforces package-style imports |
+| `prefer_relative_imports: false` | Disables relative imports |
+
+### Important Rules
+
+- `avoid_print: true` — No `print()` in production code; use a logger
+- `always_declare_return_types: true` — Explicit return types on all functions
+- `type_annotate_public_apis: true` — Annotate public method/constructor signatures
+- `avoid_returning_null_for_future: true` — Return `Future<T>` with empty result, not `null`
+- `avoid_returning_null_for_string: true` — Return `''`, not `null` for strings
+
+### Disabled Rules (Intentional)
+
+- `sort_constructors_first: false` — Constructor order flexibility
+- `use_build_context_synchronously: false` — Allowed with caution in widgets
+
+---
+
+## Testing Guidelines
+
+- Test files go in `test/` alongside `lib/`
+- Follow the existing naming pattern: `main_test.dart`, `widget_test.dart`
+- Use `flutter_test` package for widget and unit tests
+- Mock repositories/interfaces at layer boundaries
+- Test domain logic in isolation (no Flutter framework needed)
+
+---
+
+## Import Rules
+
+### ✅ Correct
+
+```dart
+import 'package:whohasmy/domain/entities/item.dart';
+import 'package:whohasmy/application/providers/dashboard_provider.dart';
+import 'package:whohasmy/infrastructure/storage/hive_storage.dart';
+```
+
+### ❌ Incorrect
+
+```dart
+import '../domain/entities/item.dart';          // Relative import — forbidden
+import '../../lib/domain/entities/item.dart';   // Absolute path — forbidden
+```
+
+---
+
+## File Structure Reference
+
+```
+lib/
+├── main.dart                          # Entry point, Hive init
+├── presentation/
+│   ├── app.dart                       # MaterialApp root widget
+│   ├── navigation/app_router.dart     # Navigation/routing
+│   └── theme/app_theme.dart           # Light/dark themes
+├── application/
+│   ├── application.dart               # Barrel exports
+│   └── providers/                     # Riverpod providers
+├── domain/      
+│   ├── domain.dart                    # Barrel exports
+│   ├── entities/
+│   ├── value_objects/
+│   │   └── risk_level.dart            # RiskLevel value object
+│   └── repositories/
+│       └── repositories.dart          # Repository interface barrel
+└── infrastructure/
+    ├── infrastructure.dart            # Barrel exports
+    └── storage/
+        └── hive_storage.dart          # Hive implementation
+```
+
+---
+
+## Mandatory Pre-Implementation Gates
+
+These gates enforce strict ordering of operations. **NO code changes, file creation, or file edits are permitted until all preceding gates have been explicitly verified and passed.** Violating these gates is a process failure that must be corrected before proceeding.
+
+### Gate 0: Story Identification & Context
+
+Before touching any code, you MUST:
+1. Use Atlassian MCP for all JIRA and Confluence interactions.
+2. Use GitHub MCP for all Github interactions.
+3. Identify the Jira issue key (e.g., `ISSUE-3`) and the Story number (e.g., `STORY003`) from the user's request or by searching Jira. If there is no issue found, use `ISSUE-TBD` as default. If there is no story found, use `STORY-TBD` as default.
+4. Retrieve the full story details including acceptance criteria from Jira.
+5. If design documentation is referenced, fetch Confluence pages for review.
+
+**GATE CHECK:** Confirm you have the correct Jira key, Story number, and acceptance criteria before proceeding. **DO NOT proceed to Gate 1 until this is complete.**
+
+### Gate 1: Branch Creation & Remote Push
+
+Before making ANY code changes, you MUST:
+1. Create a new Git branch using the naming pattern `<owner>-<phase>-STORY###` where `STORY###` is the Story number (NOT the Jira issue key).
+2. Push the branch to remote origin with `git push -u origin <branch-name>`.
+3. Verify the branch exists on remote by running `git branch -r | grep <branch-name>`.
+
+**GATE CHECK:** Confirm the branch is created locally AND pushed to remote before proceeding. **DO NOT proceed to Gate 2 until this is complete.**
+
+### Gate 2: Jira Initialization
+
+Before making ANY code changes, you MUST:
+1. Transition the Jira issue to `In Progress` using a proper workflow transition (not raw status).
+2. Assign the Jira artifact to the correct person.
+3. Verify the issue appears in the active column on the sprint board.
+
+**GATE CHECK:** Confirm Jira is initialized and the issue is in `In Progress` before proceeding. **DO NOT proceed to Gate 3 until this is complete.**
+
+### Gate 3: Implementation (Code Changes Allowed)
+
+Only after Gates 0, 1, and 2 are passed may you begin implementing code changes. All implementation must follow Clean Architecture boundaries, naming conventions, and testing guidelines defined elsewhere in this document.
+
+**GATE CHECK:** Confirm all acceptance criteria are met and tests pass before proceeding to Gate 4. **DO NOT proceed to Gate 4 until this is complete.**
+
+### Gate 4: Test Results Posted to Jira
+
+Before transitioning the issue status, you MUST:
+1. Run `flutter test` and ensure ALL tests pass.
+2. Post the full test results as a comment on the Jira story in the required format.
+
+**GATE CHECK:** Confirm test results are posted as a Jira comment before proceeding. **DO NOT transition to In Review until this is complete.**
+
+### Gate 5: Commit, Push & PR
+
+After all previous gates are passed and tests are posted:
+1. Transition the Jira issue status (e.g., to `In Review`).
+2. Stage and commit with message `<jira-id>-<status>`.
+3. Push to remote origin.
+4. Create a Pull Request linking to the Jira artifact.
+
+**GATE CHECK:** Confirm PR is created and linked before considering the story complete.
+
+---
+
+## General Guardrails for Cline
+
+1. **Always respect Clean Architecture boundaries** — never let domain code depend on presentation or infrastructure.
+2. **Use `package:` imports exclusively** — the linter enforces this.
+3. **Declare all return types explicitly** — required by analysis options.
+4. **Run `build_runner` after changes to annotated classes** — Freezed, Hive, JSON, Riverpod generators must be re-run.
+5. **No `print()` statements** — use proper logging if needed.
+6. **Never return `null` for `Future<T>` or `String`** — handle gracefully instead.
+7. **Use `const` constructors where possible** — Flutter performance best practice.
+8. **Keep widgets small and composable** — follow Flutter widget composition patterns.
+9. **Document public APIs with doc comments** (`///`) — especially entities, providers, and repository interfaces.
+10. **When in doubt, match existing code style** — refer to `lib/domain/entities/item.dart` as a reference for entity conventions.
+
+---
+
+## Commands Reference
+
+```bash
+# Run app
+flutter run
+
+# Run tests
+flutter test
+
+# Generate code (Freezed, Hive, JSON, Riverpod)
+dart run build_runner build --delete-conflicting-outputs
+
+# Analyze code
+flutter analyze
+
+# Format code
+dart format .
+
+# Get dependencies
+flutter pub get
+```
+
+---
+
+## Documentation & Agile Practices
+
+### Confluence — Technical Documentation
+
+All technical documentation updates must be created and maintained in the **Confluence space "Project-WhoHasMy"**. This includes:
+
+- Architecture decision records (ADRs)
+- API documentation
+- Design specifications and wireframes
+- Release notes and changelogs
+- Onboarding guides and runbooks
+- Technical deep-dives and research findings
+- Meeting notes for technical discussions
+
+**Rules:**
+- Place new pages under the appropriate space tree section that matches their topic (e.g., architecture docs under an "Architecture" folder, release notes under a "Releases" folder).
+- Link to Confluence pages from code comments using full URLs when referencing external design or spec documents.
+- Keep code-level documentation in `///` doc comments within the Dart source; use Confluence for higher-level, human-readable documentation that benefits from formatting, images, and collaboration.
+
+### Jira — Agile & Project Tracking
+
+All agile and project management documentation must be created and maintained in the **Jira space "WhoHasMy"**. This includes:
+
+- Epics, stories, tasks, sub-tasks, and bugs
+- Sprint planning and backlog grooming records
+- Velocity reports and burndown charts
+- Dependencies between issues (blocking, relates-to, duplicates)
+- Acceptance criteria and definition of done per story
+- Cross-team or cross-project tracking links
+
+**Rules:**
+- Every code change that implements user-facing functionality must be linked to a Jira story or task via the issue key in commit messages (e.g., `PROJ-123: implement item status filtering`).
+- Epics should represent major features or architectural changes; stories should be small enough to complete within a single sprint.
+- Update issue statuses promptly — code merged implies "Done," testing completed implies "Ready for QA," etc.
+- Use Jira labels consistently (e.g., `frontend`, `backend`, `bug`, `enhancement`) for filtering and reporting.
+
+---
+
+## Software Development Lifecycle — Story Implementation Workflow
+
+This process defines the step-by-step workflow to follow when a story or task has been requested to begin implementation in Jira.
+
+> **⚠️ CRITICAL: The Mandatory Pre-Implementation Gates section above takes precedence over this workflow.** You MUST pass all gates before proceeding. This section provides additional context for each phase but does NOT override the gate requirements.
+
+### Phase 1: Branch Creation & Setup (Gate 0 → Gate 1)
+
+1. **Create a new Git branch locally** using the naming pattern:
+   ```
+   <assigned-to-owner>-<phase>-<story-number>
+   ```
+   - `<assigned-to-owner>` — The developer's initials or username (e.g., `jc`, `jsmith`)
+   - `<phase>` — The development phase, such as:
+     - `dev` for standard feature development
+     - `bugfix` for bug fixes
+     - `hotfix` for urgent production fixes
+     - `refactor` for code refactoring
+     - `test` for test-only changes
+   - `<story-number>` — The **Story number** from the Jira artifact (e.g., `STORY037`, `STORY-036`). This is NOT the Jira issue key.
+
+   > **Important:** Use the Story number, not the Jira issue ID/key. The story number follows the pattern `STORY###` and can be found in the story's summary or description field.
+   >
+   > **Example:** `jc-dev-STORY037` or `jsmith-bugfix-STORY025`
+
+2. **Push the new branch to the remote origin repository:**
+   ```bash
+   git push -u origin <branch-name>
+   ```
+
+3. **Ensure the branch is checked out and set as the active working branch.**
+
+### Phase 2: Jira Artifact Initialization (Gate 1 → Gate 2)
+
+4. **Transition the Jira issue to `In Progress`** using the proper workflow transition (not just changing status). This ensures the issue moves to the correct swimlane/column on the Jira board.
+    - Use a transition name like `"Start Progress"` or `"In Progress"` — not a raw status value.
+    - Verify the issue now appears in the active/in-progress column of the sprint board.
+
+5. **Assign the Jira artifact** to the requestor/assignee unless a specific assignee was called out in the story description or comments. Use the same person for both the Jira assignment and the branch ownership.
+
+### Phase 3: Implementation & Testing (Gate 2 → Gate 3)
+
+6. **Implement the story requirements** following Clean Architecture boundaries, naming conventions, and code generation rules defined elsewhere in this document.
+
+7. **Ensure automated testing is part of the story acceptance criteria (A/C):**
+   - Write unit tests for domain logic and business rules
+   - Write widget/integration tests for UI changes
+   - Ensure all existing tests continue to pass
+   - Run `flutter test` locally before committing
+
+8. **Review design documentation for impacted changes:**
+   - Check Confluence pages in the **"Project-WhoHasMy"** space if architecture, API specs, or user-facing docs are affected by this story
+   - Check Figma designs if UI/UX changes are made
+   - If NO design updates needed: note "No design changes required for this story" in Jira comments
+   - If design updates ARE needed: update Confluence/Figma first, then link to updated design in Jira before proceeding
+
+9. **Execute all tests and add results to the Jira artifact:**
+    - Run `flutter test` locally and ensure ALL tests pass (no failures, no errors)
+    - Capture the full test output including: total tests run, passed/failed counts, any coverage metrics
+    - Post the test results as a **comment on the Jira story** with the following format:
+      ```
+      ## Test Results
+      - Total tests: X
+      - Passed: X
+      - Failed: 0
+      - Errors: 0
+
+      ### Test Output
+      [paste full flutter test output here]
+
+      ### Files Tested
+      - test/path/to/file_test.dart
+      - test/another_file_test.dart
+      ```
+    - Include any manual testing notes if applicable
+
+10. **Only after ALL tests pass and results are posted as a Jira comment, transition to In Review.**
+
+### Phase 4: Code Review & Pull Request (Gate 3 → Gate 5)
+
+10. **Update the Jira artifact status to `In Review`** once implementation is complete and all acceptance criteria are met.
+
+11. **Stage and commit all changed files** with a commit message following this pattern:
+    ```
+    <jira-artifact-id>-<status>
+    ```
+    - `<jira-artifact-id>` — The Jira issue key (e.g., `WHM-123`)
+    - `<status>` — Current status of the change (e.g., `dev-complete`, `bugfix-resolved`, `docs-updated`)
+
+    **Example:** `WHM-123-dev-complete` or `WHM-99-bugfix-resolved`
+
+12. **Push all committed files to the remote origin repository:**
+    ```bash
+    git push origin <branch-name>
+    ```
+
+13. **Create a Pull Request (PR)** from the feature branch to the target branch (typically `main` or `develop`):
+    - Link the PR to the Jira artifact in the PR description
+    - Include a summary of changes, test results, and any notes for reviewers
+    - Reference impacted Confluence pages or Figma designs where applicable
+    - Request reviews from appropriate team members
+
+---
+
+## Quick Reference Checklist
+
+| Step | Action | Done? | Gate |
+|------|--------|-------|------|
+| 0 | Identify Jira key, Story number, and acceptance criteria | ☐ | Gate 0 |
+| 1 | Create branch: `<owner>-<phase>-STORY###` (use Story number, NOT Jira key) | ☐ | Gate 1 |
+| 2 | Push branch to remote origin | ☐ | Gate 1 |
+| 3 | Checkout and set active branch | ☐ | Gate 1 |
+| 4 | Transition Jira issue to In Progress (proper workflow transition, not raw status) | ☐ | Gate 2 |
+| 5 | Verify issue appears in correct swimlane/column on sprint board | ☐ | Gate 2 |
+| 6 | Assign Jira artifact to correct person | ☐ | Gate 2 |
+| **GATE 1 & 2 PASSED — Code changes now permitted** | | | |
+| 7 | Implement story per acceptance criteria | ☐ | Gate 3 |
+| 8 | Review design docs (Confluence/Figma) — if no changes needed, note "No design changes required" in Jira | ☐ | Gate 3 |
+| 9 | Run `flutter test` — ensure ALL tests pass | ☐ | Gate 4 |
+| 10 | Post test results as comment on Jira story (total, passed/failed, full output) | ☐ | Gate 4 |
+| **GATE 4 PASSED — Status transition now permitted** | | | |
+| 11 | Only after tests posted: Transition Jira status to In Review | ☐ | Gate 5 |
+| 12 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
+| 13 | Push changes to remote origin | ☐ | Gate 5 |
+| 14 | Create Pull Request and request reviews | ☐ | Gate 5 |
+
+
