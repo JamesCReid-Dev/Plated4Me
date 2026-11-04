@@ -1,0 +1,54 @@
+# IDE and Editor files
+.agents/
+.github/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# BMAD framework internal files
+_bmad/
+
+# Flutter/Dart
+.dart_tool/
+.build/
+pubspec.lock
+flutter_app/build/
+flutter_app/.dart_tool/
+
+# Android
+android/app/build/
+android/.gradle/
+
+# iOS
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral
+ios/Flutter/AppFrameworkInfo.plist
+ios/Runner/GeneratedPluginRegistrant.*
+
+# macOS
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral
+
+# Web
+web/favicon.png
+web/assets/launch_app.js
+
+# Windows
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
+
+# Linux
+linux/flutter/generated_plugin_registrant.cc
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables (if any)
+.env.local
+.env.*.local
