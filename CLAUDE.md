@@ -1,5 +1,7 @@
 Project Instructions & Guardrails
 
+# (place in ~/.claude/)
+
 ## Tech Stack
 
 | Category | Technology |
