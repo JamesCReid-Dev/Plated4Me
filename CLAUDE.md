@@ -1,6 +1,29 @@
 Project Instructions & Guardrails
 
 # (place in ~/.claude/)
+This project utilizes the following MCPs for interactions with external systems:
+-Atlassian (Confluence & Jira)
+-GitHub
+
+There are specific project variables that are parsed from the project specific file:
+./.bmad.secrets.env
+
+Variables referenced:
+# Project Tracking Target Details
+JIRA_USER_ID
+JIRA_SPACE_KEY
+JIRA_ISSUE_KEY_PREFIX
+JIRA_STORY_KEY_PREFIX
+JIRA_DEFECT_KEY_PREFIX
+CONFLUENCE_SPACE_KEY
+
+# Github Repository Details
+GITHUB_REPO_OWNER
+GITHUB_REPO
+
+
+These variables will be reference throughout this instruction as a variable reference ie:
+
 
 ## Tech Stack
 
@@ -195,7 +218,7 @@ These gates enforce strict ordering of operations. **NO code changes, file creat
 Before touching any code, you MUST:
 1. Use Atlassian MCP for all JIRA and Confluence interactions.
 2. Use GitHub MCP for all Github interactions.
-3. Identify the Jira issue key (e.g., `ISSUE-3`) and the Story number (e.g., `STORY003`) from the user's request or by searching Jira. If there is no issue found, use `ISSUE-TBD` as default. If there is no story found, use `STORY-TBD` as default.
+3. Identify the Jira issue key (e.g., ${JIRA_STORY_PREFIX}001 ) and the Story number (e.g., ${JIRA_STORY_PREFIX}003 ) from the user's request or by searching Jira. If there is no issue found, use `ISSUE-TBD` as default. If there is no story found, use `STORY-TBD` as default.
 4. Retrieve the full story details including acceptance criteria from Jira.
 5. If design documentation is referenced, fetch Confluence pages for review.
 
@@ -305,7 +328,7 @@ All technical documentation updates must be created and maintained in the **Conf
 
 ### Jira — Agile & Project Tracking
 
-All agile and project management documentation must be created and maintained in the **Jira space "WhoHasMy"**. This includes:
+All agile and project management documentation must be created and maintained in the **Jira space <>"**. This includes:
 
 - Epics, stories, tasks, sub-tasks, and bugs
 - Sprint planning and backlog grooming records
