@@ -125,4 +125,4 @@ The app is successful when the user can open it before visiting a new or returni
 
 - `.memlog.md` — Append-only decision log (canonical source for this spec)
 - `_bmad_output/prd.md` — Source PRD v3.0 (aligned, validated)
-- `ref-docs/architecture/architecture.md` — Architecture document (pending review against SPEC v2.0)
+- `docs/planning-artifacts/architecture/architecture-Plated4Me-20261107/ARCHITECTURE-SPINE.md` — Architecture spine (AD-1 through AD-14, [final], Nov 2026). AD IDs are stable and citable from downstream epics/stories.
