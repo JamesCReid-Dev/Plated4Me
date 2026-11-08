@@ -1,0 +1,439 @@
+<!--
+  Governing spine sections:
+  - DESIGN.md: Colors, Typography, Components (Rating Slider, Save Button)
+  - EXPERIENCE.md: Component Patterns (Log Visit Flow — Ratings Screen), Key Flows (Flow 1)
+  - DESIGN.md: Layout & Spacing (Sectioned form pattern)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plated4Me — Log Visit Ratings</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #FAFAFA;
+    color: #1A1A1A;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .phone-frame {
+    width: 375px;
+    min-height: 812px;
+    background: #FAFAFA;
+    position: relative;
+    overflow-y: auto;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E0E0E0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-back {
+    font-size: 16px;
+    color: #E8710A;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1A1A1A;
+  }
+  .header-skip {
+    font-size: 14px;
+    color: #6E6E6E;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Restaurant name in header */
+  .restaurant-header {
+    padding: 8px 16px 0;
+  }
+  .restaurant-name-large {
+    font-size: 20px;
+    font-weight: 500;
+    color: #1A1A1A;
+  }
+
+  /* Rating Slider */
+  .rating-group {
+    background: #FFFFFF;
+    margin: 16px;
+    border-radius: 10px;
+    padding: 14px 12px;
+    border: 1px solid #EEEEEE;
+  }
+  .rating-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .rating-label {
+    font-size: 14px;
+    font-weight: 400;
+    color: #1A1A1A;
+  }
+  .rating-weight {
+    font-size: 12px;
+    color: #6E6E6E;
+  }
+  .rating-track-container {
+    position: relative;
+    height: 24px;
+    display: flex;
+    align-items: center;
+  }
+  .rating-track {
+    width: 100%;
+    height: 3px;
+    background: #EEEEEE;
+    border-radius: 2px;
+    position: relative;
+  }
+  .rating-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    border-radius: 2px;
+    background: #E8710A;
+  }
+  .rating-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #E8710A;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .rating-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    padding: 0 2px;
+  }
+  .rating-tick {
+    font-size: 10px;
+    color: #BDBDBD;
+  }
+  .rating-value-display {
+    text-align: right;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1A1A1A;
+    margin-top: 2px;
+  }
+
+  /* Composite Score */
+  .composite-score {
+    background: #FFFFFF;
+    margin: 0 16px 8px;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid #EEEEEE;
+  }
+  .composite-label {
+    font-size: 12px;
+    color: #6E6E6E;
+    margin-bottom: 4px;
+  }
+  .composite-value {
+    font-size: 32px;
+    font-weight: 400;
+    color: #E8710A;
+  }
+  .composite-lozenge {
+    display: inline-block;
+    background: #2E7D32;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-top: 4px;
+  }
+
+  /* Return Intent */
+  .return-intent-group {
+    background: #FFFFFF;
+    margin: 0 16px 8px;
+    border-radius: 10px;
+    padding: 14px 12px;
+    border: 1px solid #EEEEEE;
+  }
+  .return-intent-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1A1A1A;
+    margin-bottom: 10px;
+  }
+  .intent-toggle {
+    display: flex;
+    gap: 8px;
+  }
+  .intent-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #E0E0E0;
+    background: #FFFFFF;
+    color: #6E6E6E;
+  }
+  .intent-btn.active-yes {
+    background: #2E7D32;
+    color: #FFFFFF;
+    border-color: #2E7D32;
+  }
+
+  /* Optional Sections Accordion */
+  .optional-sections {
+    margin: 0 16px 8px;
+  }
+  .accordion-item {
+    background: #F5F5F5;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    border: 1px solid #EEEEEE;
+  }
+  .accordion-header {
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6E6E6E;
+    cursor: pointer;
+  }
+  .accordion-arrow {
+    font-size: 12px;
+    color: #BDBDBD;
+  }
+
+  /* Save Button */
+  .save-area {
+    position: sticky;
+    bottom: 0;
+    padding: 16px;
+    background: linear-gradient(to top, #FAFAFA 80%, transparent);
+  }
+  .save-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    background: #E8710A;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  /* Two-column layout */
+  .screens {
+    display: flex;
+    gap: 32px;
+    padding: 32px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .screen-label {
+    text-align: center;
+    font-size: 14px;
+    color: #6E6E6E;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  /* Alternate state: after save */
+  .saved-state {
+    text-align: center;
+    padding: 12px;
+    color: #2E7D32;
+    font-size: 14px;
+    font-weight: 500;
+    background: #FFFFFF;
+    border-top: 1px solid #EEEEEE;
+  }
+</style>
+</head>
+<body>
+<div class="screens">
+
+  <!-- Screen 1: Ratings with values filled -->
+  <div>
+    <div class="screen-label">Log Visit — Ratings (Filled)</div>
+    <div class="phone-frame">
+      <div class="header">
+        <button class="header-back">&#8592; Back</button>
+        <h2>Rate your visit</h2>
+        <button class="header-skip">Skip details</button>
+      </div>
+
+      <div class="restaurant-header">
+        <div class="restaurant-name-large">Ichiran Ramen</div>
+      </div>
+
+      <!-- Rating Sliders -->
+      <div class="rating-group">
+        <div class="rating-label-row">
+          <span class="rating-label">Food Quality</span>
+          <span class="rating-weight">40%</span>
+        </div>
+        <div class="rating-track-container">
+          <div class="rating-track">
+            <div class="rating-fill" style="width:90%"></div>
+            <div class="rating-thumb" style="left:90%"></div>
+          </div>
+        </div>
+        <div class="rating-ticks"><span class="rating-tick">1</span><span class="rating-tick">5</span><span class="rating-tick">10</span></div>
+        <div class="rating-value-display">9 / 10</div>
+      </div>
+
+      <div class="rating-group">
+        <div class="rating-label-row">
+          <span class="rating-label">Value for Money</span>
+          <span class="rating-weight">30%</span>
+        </div>
+        <div class="rating-track-container">
+          <div class="rating-track">
+            <div class="rating-fill" style="width:70%"></div>
+            <div class="rating-thumb" style="left:70%"></div>
+          </div>
+        </div>
+        <div class="rating-ticks"><span class="rating-tick">1</span><span class="rating-tick">5</span><span class="rating-tick">10</span></div>
+        <div class="rating-value-display">7 / 10</div>
+      </div>
+
+      <div class="rating-group">
+        <div class="rating-label-row">
+          <span class="rating-label">Service Quality</span>
+          <span class="rating-weight">15%</span>
+        </div>
+        <div class="rating-track-container">
+          <div class="rating-track">
+            <div class="rating-fill" style="width:80%"></div>
+            <div class="rating-thumb" style="left:80%"></div>
+          </div>
+        </div>
+        <div class="rating-ticks"><span class="rating-tick">1</span><span class="rating-tick">5</span><span class="rating-tick">10</span></div>
+        <div class="rating-value-display">8 / 10</div>
+      </div>
+
+      <div class="rating-group">
+        <div class="rating-label-row">
+          <span class="rating-label">Overall Experience</span>
+          <span class="rating-weight">15%</span>
+        </div>
+        <div class="rating-track-container">
+          <div class="rating-track">
+            <div class="rating-fill" style="width:80%"></div>
+            <div class="rating-thumb" style="left:80%"></div>
+          </div>
+        </div>
+        <div class="rating-ticks"><span class="rating-tick">1</span><span class="rating-tick">5</span><span class="rating-tick">10</span></div>
+        <div class="rating-value-display">8 / 10</div>
+      </div>
+
+      <!-- Composite Score -->
+      <div class="composite-score">
+        <div class="composite-label">Composite Score</div>
+        <div class="composite-value">82%</div>
+        <span class="composite-lozenge">Excellent</span>
+      </div>
+
+      <!-- Return Intent -->
+      <div class="return-intent-group">
+        <div class="return-intent-label">Would I come back?</div>
+        <div class="intent-toggle">
+          <button class="intent-btn active-yes">&#10003; Yes</button>
+          <button class="intent-btn">&#10007; No</button>
+        </div>
+      </div>
+
+      <!-- Optional Sections -->
+      <div class="optional-sections">
+        <div class="accordion-item">
+          <div class="accordion-header">Meal total + tip <span class="accordion-arrow">&#9654;</span></div>
+        </div>
+        <div class="accordion-item">
+          <div class="accordion-header">Visit line items <span class="accordion-arrow">&#9654;</span></div>
+        </div>
+        <div class="accordion-item">
+          <div class="accordion-header">Food journal <span class="accordion-arrow">&#9654;</span></div>
+        </div>
+        <div class="accordion-item">
+          <div class="accordion-header">Allergy-safe foods <span class="accordion-arrow">&#9654;</span></div>
+        </div>
+      </div>
+
+      <!-- Save Button -->
+      <div class="save-area">
+        <button class="save-btn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Ratings — just saved (state transition) -->
+  <div>
+    <div class="screen-label">Log Visit — Saved State</div>
+    <div class="phone-frame" style="background:#FAFAFA;">
+      <div class="header">
+        <button class="header-back">&#8592; Back</button>
+        <h2>Rate your visit</h2>
+        <span></span>
+      </div>
+
+      <div class="restaurant-header">
+        <div class="restaurant-name-large" style="color:#6E6E6E;">Ichiran Ramen</div>
+      </div>
+
+      <!-- All sliders at neutral -->
+      <div class="rating-group" style="opacity:0.5;">
+        <div class="rating-label-row">
+          <span class="rating-label">Food Quality</span><span class="rating-weight">40%</span>
+        </div>
+        <div class="rating-track-container"><div class="rating-track"><div class="rating-fill" style="width:50%"></div><div class="rating-thumb" style="left:50%;background:#BDBDBD;"></div></div></div>
+        <div class="rating-ticks"><span class="rating-tick">1</span><span class="rating-tick">5</span><span class="rating-tick">10</span></div>
+      </div>
+
+      <!-- Saved confirmation -->
+      <div class="saved-state">&#10003; Saved.</div>
+
+      <!-- Save button disabled -->
+      <div class="save-area">
+        <button class="save-btn" style="background:#BDBDBD;opacity:0.5;">Saved.</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

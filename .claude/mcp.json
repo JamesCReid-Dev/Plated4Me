@@ -1,0 +1,6 @@
+{
+  "atlassian": {
+    "type": "stdio",
+    "command": "/Users/jcreid/Documents/SW_DEV/Projects/Plated4Me/.claude/atlassian-mcp-wrapper.sh"
+  }
+}

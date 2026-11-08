@@ -1,0 +1,388 @@
+<!--
+  Governing spine sections:
+  - DESIGN.md: Colors, Typography, Layout & Spacing, Components (Visit Card, Search Bar, Filter Chip, Status Lozenge)
+  - EXPERIENCE.md: Information Architecture (Browse/Home), State Patterns (Cold open with visits), Key Flows (Flow 2)
+  - DESIGN.md: Component Patterns (Visit Card, Rating Slider composite score bar)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plated4Me — Browse/Home</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #FAFAFA;
+    color: #1A1A1A;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .phone-frame {
+    width: 375px;
+    min-height: 812px;
+    background: #FAFAFA;
+    position: relative;
+    overflow: hidden;
+  }
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E0E0E0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 500;
+    color: #1A1A1A;
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+  }
+  .icon-btn.active {
+    background: #FFF3E0;
+    color: #E8710A;
+  }
+  /* Search Bar */
+  .search-bar {
+    margin: 12px 16px 0;
+    background: #FFFFFF;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #EEEEEE;
+  }
+  .search-bar .search-icon { color: #BDBDBD; font-size: 16px; }
+  .search-bar input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    color: #1A1A1A;
+    background: transparent;
+  }
+  .search-bar input::placeholder { color: #BDBDBD; }
+
+  /* Filter Chips */
+  .filter-chips {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .chip.outline {
+    border: 1px solid #E0E0E0;
+    color: #6E6E6E;
+    background: #FFFFFF;
+  }
+  .chip.active {
+    background: #FFF3E0;
+    color: #E8710A;
+    border: 1px solid transparent;
+  }
+
+  /* Favorites Section */
+  .favorites-section {
+    padding: 8px 16px 4px;
+  }
+  .section-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1A1A1A;
+    margin-bottom: 8px;
+  }
+
+  /* Visit Cards */
+  .visit-card {
+    background: #FFFFFF;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 0 16px 8px;
+    position: relative;
+    border: 1px solid #EEEEEE;
+  }
+  .visit-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .restaurant-name {
+    font-size: 20px;
+    font-weight: 500;
+    color: #1A1A1A;
+    line-height: 1.3;
+    max-width: 280px;
+  }
+  .return-intent {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .return-intent.yes {
+    background: #2E7D32;
+    color: #FFFFFF;
+  }
+  .return-intent.no {
+    background: #C62828;
+    color: #FFFFFF;
+  }
+  .visit-date {
+    font-size: 12px;
+    color: #6E6E6E;
+    margin-top: 4px;
+  }
+  .score-bar-container {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .score-bar {
+    flex: 1;
+    height: 3px;
+    background: #EEEEEE;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+  .score-bar-fill.excellent { background: #2E7D32; }
+  .score-bar-fill.good { background: #FFB74D; }
+  .score-value {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6E6E6E;
+    min-width: 36px;
+    text-align: right;
+  }
+  .allergy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #E8F5E9;
+    color: #2E7D32;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-top: 6px;
+  }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: #E8710A;
+    color: #FFFFFF;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(232, 113, 10, 0.3);
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Empty state variant */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 32px;
+    text-align: center;
+  }
+  .empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+  .empty-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: #1A1A1A;
+    margin-bottom: 8px;
+  }
+  .empty-subtitle {
+    font-size: 14px;
+    color: #6E6E6E;
+    line-height: 1.5;
+  }
+
+  /* Two-column layout */
+  .screens {
+    display: flex;
+    gap: 32px;
+    padding: 32px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .screen-label {
+    text-align: center;
+    font-size: 14px;
+    color: #6E6E6E;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+<div class="screens">
+
+  <!-- Screen 1: Browse with visits -->
+  <div>
+    <div class="screen-label">Browse/Home — With Visits</div>
+    <div class="phone-frame">
+      <div class="header">
+        <h1>Plated4Me</h1>
+        <div class="header-actions">
+          <button class="icon-btn active" title="Filters active">&#9881;</button>
+          <button class="icon-btn" title="Settings">&#9882;</button>
+        </div>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" placeholder="Search restaurants, dishes, notes…">
+      </div>
+      <div class="filter-chips">
+        <span class="chip active">Date Night</span>
+        <span class="chip outline">Allergy-safe only</span>
+        <span class="chip outline">Quick Bite</span>
+        <span class="chip outline">Japanese</span>
+      </div>
+
+      <!-- Favorites Section -->
+      <div class="favorites-section">
+        <div class="section-label">Favorites</div>
+      </div>
+
+      <!-- Favorite Visit Card -->
+      <div class="visit-card" style="border-left: 3px solid #2E7D32;">
+        <div class="visit-card-header">
+          <span class="restaurant-name">Ichiran Ramen</span>
+          <span class="return-intent yes">&#10003;</span>
+        </div>
+        <div class="visit-date">Nov 5, 2026 · Favorite</div>
+        <div class="score-bar-container">
+          <div class="score-bar"><div class="score-bar-fill excellent" style="width:82%"></div></div>
+          <span class="score-value">82%</span>
+        </div>
+      </div>
+
+      <!-- Regular Visit Cards -->
+      <div class="visit-card">
+        <div class="visit-card-header">
+          <span class="restaurant-name">Taco Luna</span>
+          <span class="return-intent yes">&#10003;</span>
+        </div>
+        <div class="visit-date">Nov 2, 2026 · Quick Bite</div>
+        <div class="score-bar-container">
+          <div class="score-bar"><div class="score-bar-fill excellent" style="width:90%"></div></div>
+          <span class="score-value">90%</span>
+        </div>
+      </div>
+
+      <div class="visit-card">
+        <div class="visit-card-header">
+          <span class="restaurant-name">Bella Napoli</span>
+          <span class="return-intent no">&#10007;</span>
+        </div>
+        <div class="visit-date">Oct 28, 2026 · Business Lunch</div>
+        <div class="score-bar-container">
+          <div class="score-bar"><div class="score-bar-fill good" style="width:65%"></div></div>
+          <span class="score-value">65%</span>
+        </div>
+      </div>
+
+      <div class="visit-card">
+        <div class="visit-card-header">
+          <span class="restaurant-name">Sukiyabashi Sushimoto</span>
+          <span class="return-intent yes">&#10003;</span>
+        </div>
+        <div class="visit-date">Oct 20, 2026 · Trying Something New</div>
+        <div class="score-bar-container">
+          <div class="score-bar"><div class="score-bar-fill excellent" style="width:95%"></div></div>
+          <span class="score-value">95%</span>
+        </div>
+      </div>
+
+      <!-- FAB -->
+      <button class="fab">+</button>
+    </div>
+  </div>
+
+  <!-- Screen 2: Empty state (no visits) -->
+  <div>
+    <div class="screen-label">Browse/Home — No Visits</div>
+    <div class="phone-frame" style="background:#FAFAFA;">
+      <div class="header">
+        <h1>Plated4Me</h1>
+        <div class="header-actions">
+          <button class="icon-btn" title="Settings">&#9882;</button>
+        </div>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" placeholder="Search restaurants, dishes, notes…">
+      </div>
+
+      <div class="empty-state">
+        <div class="empty-icon">&#127860;</div>
+        <div class="empty-title">No visits yet</div>
+        <div class="empty-subtitle">Tap + to log your first dining experience.</div>
+      </div>
+
+      <!-- FAB -->
+      <button class="fab">+</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
