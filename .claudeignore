@@ -1,0 +1,26 @@
+# IDE and System files
+.idea/
+.git/
+.ds_store
+
+# Dependencies
+node_modules/
+vendor/
+.venv/
+env/
+
+# Build outputs and caches
+dist/
+build/
+out/
+target/
+.gradle/
+.next/
+*.log
+
+# Large data/media assets
+*.mp4
+*.png
+*.jpg
+*.svg
+*.json
