@@ -10,6 +10,9 @@
 # BMAD framework internal files
 _bmad/
 
+# Planning artifact memory logs
+*.memlog.md
+
 # Flutter/Dart
 .dart_tool/
 .build/
