@@ -168,9 +168,9 @@ All generated files live alongside their source with `.g.dart`, `.freezed.dart`,
 ### ✅ Correct
 
 ```dart
-import 'package:whohasmy/domain/entities/item.dart';
-import 'package:whohasmy/application/providers/dashboard_provider.dart';
-import 'package:whohasmy/infrastructure/storage/hive_storage.dart';
+import 'package:plated4me/domain/entities/item.dart';
+import 'package:plated4me/application/providers/dashboard_provider.dart';
+import 'package:plated4me/infrastructure/storage/hive_storage.dart';
 ```
 
 ### ❌ Incorrect
@@ -311,7 +311,7 @@ flutter pub get
 
 ### Confluence — Technical Documentation
 
-All technical documentation updates must be created and maintained in the **Confluence space "Project-WhoHasMy"**. This includes:
+All technical documentation updates must be created and maintained in the **Confluence space "Plated4Me"**. This includes:
 
 - Architecture decision records (ADRs)
 - API documentation
@@ -328,7 +328,7 @@ All technical documentation updates must be created and maintained in the **Conf
 
 ### Jira — Agile & Project Tracking
 
-All agile and project management documentation must be created and maintained in the **Jira space <>"**. This includes:
+All agile and project management documentation must be created and maintained in the **Jira space `P4ME`** (key prefix `IS-`). This includes:
 
 - Epics, stories, tasks, sub-tasks, and bugs
 - Sprint planning and backlog grooming records
@@ -396,7 +396,7 @@ This process defines the step-by-step workflow to follow when a story or task ha
    - Run `flutter test` locally before committing
 
 8. **Review design documentation for impacted changes:**
-   - Check Confluence pages in the **"Project-WhoHasMy"** space if architecture, API specs, or user-facing docs are affected by this story
+   - Check Confluence pages in the **"Plated4Me"** space if architecture, API specs, or user-facing docs are affected by this story
    - Check Figma designs if UI/UX changes are made
    - If NO design updates needed: note "No design changes required for this story" in Jira comments
    - If design updates ARE needed: update Confluence/Figma first, then link to updated design in Jira before proceeding
@@ -431,10 +431,10 @@ This process defines the step-by-step workflow to follow when a story or task ha
     ```
     <jira-artifact-id>-<status>
     ```
-    - `<jira-artifact-id>` — The Jira issue key (e.g., `WHM-123`)
+    - `<jira-artifact-id>` — The Jira issue key using prefix `IS-` (e.g., `IS-123`)
     - `<status>` — Current status of the change (e.g., `dev-complete`, `bugfix-resolved`, `docs-updated`)
 
-    **Example:** `WHM-123-dev-complete` or `WHM-99-bugfix-resolved`
+    **Example:** `IS-123-dev-complete` or `IS-99-bugfix-resolved`
 
 12. **Push all committed files to the remote origin repository:**
     ```bash
