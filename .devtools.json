@@ -1,0 +1,6 @@
+{
+  "enableAnalysisImportHints": true,
+  "enableDartDocView": true,
+  "enableSdkFormatter": true,
+  "memoryLimitMb": 4096
+}

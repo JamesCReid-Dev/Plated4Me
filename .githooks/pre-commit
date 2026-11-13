@@ -1,0 +1,19 @@
+#!/bin/bash
+# Pre-commit hook: run flutter analyze before each commit.
+# Blocks commit if static analysis reports any issues.
+#
+# Install with:
+#   cp .githooks/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+
+echo "Running Flutter static analysis..."
+
+if ! flutter analyze --no-fatal-infos; then
+  echo ""
+  echo "❌ flutter analyze found issues. Fix them before committing."
+  echo "Run 'flutter analyze' to see the full output."
+  exit 1
+fi
+
+echo "✅ Static analysis passed."
+exit 0
