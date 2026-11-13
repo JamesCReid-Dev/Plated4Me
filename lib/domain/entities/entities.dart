@@ -21,10 +21,16 @@ class Restaurant {
   String? address;
 
   /// When this restaurant record was first created.
+  @Index(type: IndexType.value)
   DateTime createdAt = DateTime.now();
 
   /// Last time any field on this restaurant was updated.
   DateTime updatedAt = DateTime.now();
+
+  // -- Sub-collections --------------------------------------------------------
+  /// Allergy-safe foods associated with this restaurant (FR-5).
+  @ignore
+  List<AllergySafeFood> allergySafeFoods = const [];
 
   Restaurant({required this.name, this.address});
 
@@ -80,25 +86,29 @@ class Visit {
   String? blacklistReason;
 
   // -- Timestamps -----------------------------------------------------------
+  /// When this visit record was first created.
+  @Index(type: IndexType.value)
   DateTime createdAt = DateTime.now();
+
+  /// Last time any field on this visit was updated.
   DateTime updatedAt = DateTime.now();
 
-  // -- Sub-collections (FR-5, FR-6, FR-2, UX-DR9) --------------------------
-  /// Accessed via Isar queries: `isar.journalEntries.filter().visitIdEqualTo(id).findAll()`
+  // -- Sub-collections (FR-6, FR-2, UX-DR9) ---------------------------------
+  /// Allergy-safe foods recorded during this visit (FR-5).
+  @ignore
+  List<AllergySafeFood> allergySafeFoods = const [];
+
+  /// Journal entries for dishes tasted on this visit (FR-6).
   @ignore
   List<JournalEntry> journalEntries = const [];
 
-  /// Accessed via Isar queries: `isar.lineItems.filter().visitIdEqualTo(id).findAll()`
+  /// Line items (dishes ordered) for this visit (FR-2).
   @ignore
   List<VisitLineItem> lineItems = const [];
 
-  /// Accessed via Isar queries: `isar.photos.filter().visitIdEqualTo(id).findAll()`
+  /// Photo attachments for this visit (UX-DR9).
   @ignore
   List<PhotoAttachment> photos = const [];
-
-  /// Accessed via Isar queries: `isar.allergySafeFoods.filter().visitIdEqualTo(id).findAll()`
-  @ignore
-  List<AllergySafeFood> allergySafeFoods = const [];
 
   Visit({
     required this.restaurantId,
@@ -132,26 +142,36 @@ class Visit {
     DateTime? updatedAt,
   }) {
     return Visit(
-      restaurantId: restaurantId ?? this.restaurantId,
-      foodRating: foodRating ?? this.foodRating,
-      valueRating: valueRating ?? this.valueRating,
-      serviceRating: serviceRating ?? this.serviceRating,
-      overallRating: overallRating ?? this.overallRating,
-      compositeScore: compositeScore ?? this.compositeScore,
-      returnIntent: returnIntent ?? this.returnIntent,
-    )..id = id ?? this.id
+        restaurantId: restaurantId ?? this.restaurantId,
+        foodRating: foodRating ?? this.foodRating,
+        valueRating: valueRating ?? this.valueRating,
+        serviceRating: serviceRating ?? this.serviceRating,
+        overallRating: overallRating ?? this.overallRating,
+        compositeScore: compositeScore ?? this.compositeScore,
+        returnIntent: returnIntent ?? this.returnIntent,
+      )
+      ..id = id ?? this.id
       ..createdAt = createdAt ?? this.createdAt
       ..updatedAt = updatedAt ?? this.updatedAt;
   }
 
   @override
-  String toString() => 'Visit(restaurantId: $restaurantId, composite: $compositeScore)';
+  String toString() =>
+      'Visit(restaurantId: $restaurantId, composite: $compositeScore)';
 }
 
 @collection
 class UserPreferences {
   /// There is exactly one UserPreferences record per device.
   Id id = 1;
+
+  // -- Timestamps -----------------------------------------------------------
+  /// When these preferences were first created.
+  @Index(type: IndexType.value)
+  DateTime createdAt = DateTime.now();
+
+  /// Last time any preference was updated.
+  DateTime updatedAt = DateTime.now();
 
   // -- Allergies (FR-14, FR-16) ---------------------------------------------
   @ignore
@@ -171,7 +191,7 @@ class UserPreferences {
 
   UserPreferences();
 
-  void touch() {}
+  void touch() => updatedAt = DateTime.now();
 
   UserPreferences copyWith({
     List<Allergen>? allergies,
@@ -179,6 +199,8 @@ class UserPreferences {
     int? ratingScale,
     List<String>? defaultOccasions,
     bool? onboardingComplete,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     final result = UserPreferences()..id = id;
     if (allergies != null) {
@@ -198,6 +220,8 @@ class UserPreferences {
       result.defaultOccasions.addAll(this.defaultOccasions);
     }
     result.onboardingComplete = onboardingComplete ?? this.onboardingComplete;
+    result.createdAt = createdAt ?? this.createdAt;
+    result.updatedAt = updatedAt ?? this.updatedAt;
     return result;
   }
 
@@ -211,6 +235,9 @@ class UserPreferences {
 class AllergySafeFood {
   Id id = Isar.autoIncrement;
   String itemName = '';
+
+  /// When this safe-food entry was created.
+  @Index(type: IndexType.value)
   DateTime createdAt = DateTime.now();
 
   AllergySafeFood({required this.itemName});
@@ -230,13 +257,18 @@ class JournalEntry {
   Id id = Isar.autoIncrement;
   String dishName = '';
   String impressions = '';
+
+  /// When this journal entry was created.
+  @Index(type: IndexType.value)
   DateTime createdAt = DateTime.now();
 
   JournalEntry({required this.dishName, required this.impressions});
 
   JournalEntry copyWith({Id? id, String? dishName, String? impressions}) {
-    return JournalEntry(dishName: dishName ?? this.dishName, impressions: impressions ?? this.impressions)
-      ..id = id ?? this.id;
+    return JournalEntry(
+      dishName: dishName ?? this.dishName,
+      impressions: impressions ?? this.impressions,
+    )..id = id ?? this.id;
   }
 
   @override
@@ -249,10 +281,16 @@ class VisitLineItem {
   String dishName = '';
   double? price;
 
+  /// When this line item was created.
+  @Index(type: IndexType.value)
+  DateTime createdAt = DateTime.now();
+
   VisitLineItem({required this.dishName});
 
   VisitLineItem copyWith({Id? id, String? dishName, double? price}) {
-    return VisitLineItem(dishName: dishName ?? this.dishName)..id = id ?? this.id..price = price ?? this.price;
+    return VisitLineItem(dishName: dishName ?? this.dishName)
+      ..id = id ?? this.id
+      ..price = price ?? this.price;
   }
 
   @override
@@ -263,13 +301,22 @@ class VisitLineItem {
 class PhotoAttachment {
   Id id = Isar.autoIncrement;
   String filePath = '';
+
+  /// When this photo was taken/attached.
+  @Index(type: IndexType.value)
   DateTime timestamp = DateTime.now();
+
+  /// When this attachment record was created.
+  @Index(type: IndexType.value)
+  DateTime createdAt = DateTime.now();
 
   PhotoAttachment({required this.filePath, required this.timestamp});
 
   PhotoAttachment copyWith({Id? id, String? filePath, DateTime? timestamp}) {
-    return PhotoAttachment(filePath: filePath ?? this.filePath, timestamp: timestamp ?? this.timestamp)
-      ..id = id ?? this.id;
+    return PhotoAttachment(
+      filePath: filePath ?? this.filePath,
+      timestamp: timestamp ?? this.timestamp,
+    )..id = id ?? this.id;
   }
 
   @override
@@ -281,13 +328,25 @@ class PhotoAttachment {
 @collection
 class Allergen {
   Id id = Isar.autoIncrement;
+
+  /// The allergen's display name. Indexed for lookups.
+  @Index(type: IndexType.value)
   String name = '';
-  int severity = 0; // 0 = moderate, 1 = severe (stored as int for Isar compatibility)
+
+  /// Severity level: 0 = moderate, 1 = severe (stored as int for Isar compatibility).
+  int severity = 0;
+
+  /// When this allergen entry was created.
+  @Index(type: IndexType.value)
+  DateTime createdAt = DateTime.now();
 
   Allergen({required this.name, required this.severity});
 
   Allergen copyWith({Id? id, String? name, int? severity}) {
-    return Allergen(name: name ?? this.name, severity: severity ?? this.severity)..id = id ?? this.id;
+    return Allergen(
+      name: name ?? this.name,
+      severity: severity ?? this.severity,
+    )..id = id ?? this.id;
   }
 
   @override

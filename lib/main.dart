@@ -15,7 +15,9 @@ Isar? _isarInstance;
 /// Throws if called before [initDatabase] completes.
 Isar get isar {
   if (_isarInstance == null) {
-    throw StateError('Isar not initialized — call initDatabase() before accessing');
+    throw StateError(
+      'Isar not initialized — call initDatabase() before accessing',
+    );
   }
   return _isarInstance!;
 }
@@ -23,11 +25,23 @@ Isar get isar {
 /// Initializes the Isar database with all entity collections.
 ///
 /// Called from [main] before [runApp]. Creates the app directory and opens
-/// the database with [RestaurantSchema], [VisitSchema], and [UserPreferencesSchema].
+/// the database with all eight collection schemas: [RestaurantSchema],
+/// [VisitSchema], [UserPreferencesSchema], [AllergySafeFoodSchema],
+/// [JournalEntrySchema], [VisitLineItemSchema], [PhotoAttachmentSchema],
+/// and [AllergenSchema].
 Future<void> initDatabase() async {
   final dir = await getApplicationDocumentsDirectory();
   _isarInstance = await Isar.open(
-    [RestaurantSchema, VisitSchema, UserPreferencesSchema],
+    [
+      RestaurantSchema,
+      VisitSchema,
+      UserPreferencesSchema,
+      AllergySafeFoodSchema,
+      JournalEntrySchema,
+      VisitLineItemSchema,
+      PhotoAttachmentSchema,
+      AllergenSchema,
+    ],
     directory: dir.path,
     inspector: true, // Enable schema inspection in debug mode
   );
@@ -38,10 +52,16 @@ Future<void> initDatabase() async {
 /// By default uses an in-memory database (`':memory:'`) for fast,
 /// isolated unit tests. Pass a [directory] to use file-based storage.
 Future<Isar> createIsarInstance({String? directory}) async {
-  return await Isar.open(
-    [RestaurantSchema, VisitSchema, UserPreferencesSchema],
-    directory: directory ?? ':memory:',
-  );
+  return await Isar.open([
+    RestaurantSchema,
+    VisitSchema,
+    UserPreferencesSchema,
+    AllergySafeFoodSchema,
+    JournalEntrySchema,
+    VisitLineItemSchema,
+    PhotoAttachmentSchema,
+    AllergenSchema,
+  ], directory: directory ?? ':memory:');
 }
 
 void main() async {

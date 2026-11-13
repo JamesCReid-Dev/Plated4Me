@@ -16,7 +16,10 @@ void main() {
     });
 
     test('can be created with name and address', () {
-      final restaurant = Restaurant(name: 'Test Restaurant', address: '123 Main St');
+      final restaurant = Restaurant(
+        name: 'Test Restaurant',
+        address: '123 Main St',
+      );
 
       expect(restaurant.name, equals('Test Restaurant'));
       expect(restaurant.address, equals('123 Main St'));
@@ -71,7 +74,9 @@ void main() {
 
     test('copyWith updates allergies', () {
       final original = UserPreferences();
-      final updated = original.copyWith(allergies: [Allergen(name: 'Peanuts', severity: 1)]);
+      final updated = original.copyWith(
+        allergies: [Allergen(name: 'Peanuts', severity: 1)],
+      );
 
       expect(updated.allergies, hasLength(1));
       expect(updated.allergies[0].name, equals('Peanuts'));
@@ -88,7 +93,9 @@ void main() {
 
     test('copyWith updates cuisine preferences', () {
       final original = UserPreferences();
-      final updated = original.copyWith(cuisinePreferences: ['Italian', 'Japanese']);
+      final updated = original.copyWith(
+        cuisinePreferences: ['Italian', 'Japanese'],
+      );
 
       expect(updated.cuisinePreferences, hasLength(2));
       expect(updated.cuisinePreferences[0], equals('Italian'));
@@ -145,7 +152,10 @@ void main() {
 
   group('JournalEntry', () {
     test('can be created with required fields', () {
-      final entry = JournalEntry(dishName: 'Pad Thai', impressions: 'Spicy and delicious');
+      final entry = JournalEntry(
+        dishName: 'Pad Thai',
+        impressions: 'Spicy and delicious',
+      );
 
       expect(entry.dishName, equals('Pad Thai'));
       expect(entry.impressions, equals('Spicy and delicious'));
@@ -202,7 +212,10 @@ void main() {
   group('PhotoAttachment', () {
     test('can be created with file path and timestamp', () {
       final now = DateTime.now();
-      final photo = PhotoAttachment(filePath: '/photos/img001.jpg', timestamp: now);
+      final photo = PhotoAttachment(
+        filePath: '/photos/img001.jpg',
+        timestamp: now,
+      );
 
       expect(photo.filePath, equals('/photos/img001.jpg'));
       expect(photo.timestamp, equals(now));
@@ -211,8 +224,14 @@ void main() {
     test('copyWith updates file path and timestamp', () {
       final oldTime = DateTime.utc(2024, 1, 1);
       final newTime = DateTime.utc(2024, 6, 1);
-      final original = PhotoAttachment(filePath: '/old.jpg', timestamp: oldTime);
-      final updated = original.copyWith(filePath: '/new.jpg', timestamp: newTime);
+      final original = PhotoAttachment(
+        filePath: '/old.jpg',
+        timestamp: oldTime,
+      );
+      final updated = original.copyWith(
+        filePath: '/new.jpg',
+        timestamp: newTime,
+      );
 
       expect(updated.filePath, equals('/new.jpg'));
       expect(updated.timestamp, equals(newTime));
