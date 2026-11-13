@@ -15,7 +15,7 @@ extension GetRestaurantCollection on Isar {
 
 const RestaurantSchema = CollectionSchema(
   name: r'Restaurant',
-  id: -2985775126615523729,
+  id: 0,
   properties: {
     r'address': PropertySchema(id: 0, name: r'address', type: IsarType.string),
     r'createdAt': PropertySchema(
@@ -37,7 +37,7 @@ const RestaurantSchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'name': IndexSchema(
-      id: 879695947855722453,
+      id: 1,
       name: r'name',
       unique: false,
       replace: false,
@@ -50,7 +50,7 @@ const RestaurantSchema = CollectionSchema(
       ],
     ),
     r'address': IndexSchema(
-      id: -259407546592846288,
+      id: 2,
       name: r'address',
       unique: false,
       replace: false,
@@ -63,7 +63,7 @@ const RestaurantSchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: 3,
       name: r'createdAt',
       unique: false,
       replace: false,
@@ -1368,7 +1368,7 @@ extension GetVisitCollection on Isar {
 
 const VisitSchema = CollectionSchema(
   name: r'Visit',
-  id: -2497115541782241183,
+  id: 4,
   properties: {
     r'blacklistReason': PropertySchema(
       id: 0,
@@ -1458,7 +1458,7 @@ const VisitSchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: 3,
       name: r'createdAt',
       unique: false,
       replace: false,
@@ -3878,7 +3878,7 @@ extension GetUserPreferencesCollection on Isar {
 
 const UserPreferencesSchema = CollectionSchema(
   name: r'UserPreferences',
-  id: -7545901164102504045,
+  id: 5,
   properties: {
     r'createdAt': PropertySchema(
       id: 0,
@@ -3918,7 +3918,7 @@ const UserPreferencesSchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: 3,
       name: r'createdAt',
       unique: false,
       replace: false,
@@ -5104,7 +5104,7 @@ extension GetAllergySafeFoodCollection on Isar {
 
 const AllergySafeFoodSchema = CollectionSchema(
   name: r'AllergySafeFood',
-  id: 606281902510055001,
+  id: 6,
   properties: {
     r'createdAt': PropertySchema(
       id: 0,
@@ -5124,7 +5124,7 @@ const AllergySafeFoodSchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: 3,
       name: r'createdAt',
       unique: false,
       replace: false,
@@ -5781,7 +5781,7 @@ extension GetJournalEntryCollection on Isar {
 
 const JournalEntrySchema = CollectionSchema(
   name: r'JournalEntry',
-  id: -8443410721192565146,
+  id: 7,
   properties: {
     r'createdAt': PropertySchema(
       id: 0,
@@ -5806,7 +5806,7 @@ const JournalEntrySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: 3,
       name: r'createdAt',
       unique: false,
       replace: false,
@@ -6648,7 +6648,7 @@ extension GetVisitLineItemCollection on Isar {
 
 const VisitLineItemSchema = CollectionSchema(
   name: r'VisitLineItem',
-  id: 8501219137448538895,
+  id: 8,
   properties: {
     r'createdAt': PropertySchema(
       id: 0,
@@ -6669,7 +6669,7 @@ const VisitLineItemSchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: 3,
       name: r'createdAt',
       unique: false,
       replace: false,
@@ -7454,7 +7454,7 @@ extension GetPhotoAttachmentCollection on Isar {
 
 const PhotoAttachmentSchema = CollectionSchema(
   name: r'PhotoAttachment',
-  id: 2709129072149162988,
+  id: 9,
   properties: {
     r'createdAt': PropertySchema(
       id: 0,
@@ -7479,7 +7479,7 @@ const PhotoAttachmentSchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'timestamp': IndexSchema(
-      id: 1852253767416892198,
+      id: 10,
       name: r'timestamp',
       unique: false,
       replace: false,
@@ -7492,7 +7492,7 @@ const PhotoAttachmentSchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: 3,
       name: r'createdAt',
       unique: false,
       replace: false,
@@ -8360,7 +8360,7 @@ extension GetAllergenCollection on Isar {
 
 const AllergenSchema = CollectionSchema(
   name: r'Allergen',
-  id: -1194182094084170681,
+  id: 11,
   properties: {
     r'createdAt': PropertySchema(
       id: 0,
@@ -8377,7 +8377,7 @@ const AllergenSchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'name': IndexSchema(
-      id: 879695947855722453,
+      id: 1,
       name: r'name',
       unique: false,
       replace: false,
@@ -8390,7 +8390,7 @@ const AllergenSchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: 3,
       name: r'createdAt',
       unique: false,
       replace: false,
