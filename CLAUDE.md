@@ -1,9 +1,9 @@
 Project Instructions & Guardrails
 
 # (place in ~/.claude/)
-This project utilizes the following MCPs for interactions with external systems:
--Atlassian (Confluence & Jira)
--GitHub
+This project utilizes the following tools for interactions with external systems:
+-**acli** — All Atlassian (Confluence & Jira) interactions go through the `acli` command-line interface. **Do not use MCP for any Jira or Confluence operations.**
+- **GitHub MCP** — GitHub interactions continue to use MCP.
 
 There are specific project variables that are parsed from the project specific file:
 ./.bmad.secrets.env
@@ -33,7 +33,8 @@ These variables will be reference throughout this instruction as a variable refe
 | State Management | Riverpod (`flutter_riverpod` + `riverpod_annotation`) |
 | Immutability | Freezed (`freezed_annotation` + `freezed`) |
 | Serialization | JSON Serializable (`json_annotation` + `json_serializable`) |
-| Local Storage | Hive (`hive` + `hive_flutter` + `hive_generator`) |
+| Local Storage | **Isar** (`isar` + `isar_generator`) — primary NoSQL store (Sprint 1+) |
+| Local Storage | Hive (`hive` + `hive_flutter` + `hive_generator`) — key-value fallback only |
 | Linting | `flutter_lints` (custom rules in `analysis_options.yaml`) |
 | Testing | Flutter test framework (`flutter_test`) |
 
@@ -55,9 +56,9 @@ infrastructure/        ← Storage implementations, external services
 
 ### Layer Responsibilities
 
-- **`lib/domain/`** — Pure business entities (`Item`, `Contact`, `Loan`), value objects (`RiskLevel`), and repository interfaces. No framework dependencies whatsoever.
+- **`lib/domain/`** — Pure business entities (`Restaurant`, `Visit`, `UserPreferences`), value objects, and repository interfaces. No framework dependencies whatsoever.
 - **`lib/application/`** — Riverpod providers, business logic orchestration. Imports domain only.
-- **`lib/infrastructure/`** — Hive storage implementation, adapters. Imports domain and application as needed.
+- **`lib/infrastructure/`** — Isar storage implementation, adapters. Imports domain as needed.
 - **`lib/presentation/`** — Flutter widgets, routing (`AppRouter`), theming (`AppTheme`). Imports everything else.
 
 ### Layer Barrel Files
@@ -75,15 +76,15 @@ Use these barrel imports in production code to keep import chains short and main
 
 | Element | Convention | Example |
 |---------|-----------|---------|
-| Classes / Enums | PascalCase | `Item`, `ItemStatus`, `LoanProvider` |
-| Variables / Functions | camelCase | `createdAt`, `getLoanedItems()` |
-| Files / Directories | snake_case | `dashboard_provider.dart`, `risk_level.dart` |
+| Classes / Enums | PascalCase | `Restaurant`, `VisitStatus`, `AllergenSeverity` |
+| Variables / Functions | camelCase | `createdAt`, `getVisitedRestaurants()` |
+| Files / Directories | snake_case | `restaurant_provider.dart`, `allergen_severity.dart` |
 | Constants | UPPER_SNAKE_CASE | `MAX_NAME_LENGTH` (if used) |
 | Private members | leading underscore | `_boxName`, `_validate()` |
 
 ### Entity Field Naming
 
-- Use `id` for primary keys (Hive key format: `"item:{uuid}"`)
+- Use `id` for primary keys (Isar auto-increment or fixed ID)
 - Use `createdAt` and `updatedAt` for timestamps
 - Nullable fields use `?` type annotation explicitly
 - Default values via constructor parameters, not `copyWith` defaults where possible
@@ -97,6 +98,7 @@ All generated files live alongside their source with `.g.dart`, `.freezed.dart`,
 ### Mandatory Practices
 
 1. **Always run `build_runner`** after modifying:
+   - Isar entities → generates `.g.dart` (schema + collection accessors)
    - Freezed classes → generates `.freezed.dart`
    - JSON-serializable classes → generates `.g.dart`
    - Hive adapters → generates `.hive_adapter.g.dart`
@@ -111,7 +113,16 @@ All generated files live alongside their source with `.g.dart`, `.freezed.dart`,
    - Use named constructors for different factory patterns
    - Annotate with `@JsonSerializable()` when serialization is needed
 
-5. **Hive adapters**:
+5. **Isar entities** (Sprint 1+):
+   - All entity classes live in a single file: `lib/domain/entities/entities.dart`
+   - Each class uses the `@collection` annotation (lowercase, Isar 3.x style)
+   - Use `part 'entities.g.dart';` at the top of the entities file
+   - Import `package:isar/isar.dart` for `Id`, `Isar.autoIncrement`, `Index`, etc.
+   - **Never use `late` on entity fields** — Isar generates its own getters/setters
+   - Sub-collections (one-to-many): use `@ignore` on List fields; query via Isar filters instead of embedding lists
+   - Open database with `[RestaurantSchema, VisitSchema, ...]` in main.dart
+
+6. **Hive adapters** (fallback only):
    - Register all adapters in `main.dart` before `runApp()`
    - Hive key format: `"entity_type:{uuid}"` (e.g., `"item:{uuid}"`)
    - Use `Hive.initFlutter()` in `main()` before any UI renders
@@ -143,13 +154,12 @@ All generated files live alongside their source with `.g.dart`, `.freezed.dart`,
 - `avoid_print: true` — No `print()` in production code; use a logger
 - `always_declare_return_types: true` — Explicit return types on all functions
 - `type_annotate_public_apis: true` — Annotate public method/constructor signatures
-- `avoid_returning_null_for_future: true` — Return `Future<T>` with empty result, not `null`
-- `avoid_returning_null_for_string: true` — Return `''`, not `null` for strings
 
 ### Disabled Rules (Intentional)
 
 - `sort_constructors_first: false` — Constructor order flexibility
 - `use_build_context_synchronously: false` — Allowed with caution in widgets
+- `dangling_library_doc_comments: false` — Acceptable for barrel files and part files
 
 ---
 
@@ -168,9 +178,9 @@ All generated files live alongside their source with `.g.dart`, `.freezed.dart`,
 ### ✅ Correct
 
 ```dart
-import 'package:plated4me/domain/entities/item.dart';
+import 'package:plated4me/domain/entities/restaurant.dart';
 import 'package:plated4me/application/providers/dashboard_provider.dart';
-import 'package:plated4me/infrastructure/storage/hive_storage.dart';
+import 'package:plated4me/infrastructure/storage/isar_storage.dart';
 ```
 
 ### ❌ Incorrect
@@ -186,25 +196,25 @@ import '../../lib/domain/entities/item.dart';   // Absolute path — forbidden
 
 ```
 lib/
-├── main.dart                          # Entry point, Hive init
+├── main.dart                          # Entry point, ProviderScope, Isar init
 ├── presentation/
-│   ├── app.dart                       # MaterialApp root widget
 │   ├── navigation/app_router.dart     # Navigation/routing
 │   └── theme/app_theme.dart           # Light/dark themes
 ├── application/
 │   ├── application.dart               # Barrel exports
 │   └── providers/                     # Riverpod providers
-├── domain/      
+├── domain/
 │   ├── domain.dart                    # Barrel exports
 │   ├── entities/
+│   │   ├── entities.dart              # All Isar @collection classes + part directive
+│   │   └── entities.g.dart            # Generated by isar_generator
 │   ├── value_objects/
-│   │   └── risk_level.dart            # RiskLevel value object
 │   └── repositories/
 │       └── repositories.dart          # Repository interface barrel
 └── infrastructure/
     ├── infrastructure.dart            # Barrel exports
     └── storage/
-        └── hive_storage.dart          # Hive implementation
+        └── isar_storage.dart          # Isar implementation
 ```
 
 ---
@@ -216,8 +226,8 @@ These gates enforce strict ordering of operations. **NO code changes, file creat
 ### Gate 0: Story Identification & Context
 
 Before touching any code, you MUST:
-1. Use Atlassian MCP for all JIRA and Confluence interactions.
-2. Use GitHub MCP for all Github interactions.
+1. Use the `acli` interface for **all** Jira and Confluence interactions. **Never use MCP for Jira or Confluence operations.**
+2. Use GitHub MCP for all GitHub interactions.
 3. Identify the Jira issue key (e.g., ${JIRA_STORY_PREFIX}001 ) and the Story number (e.g., ${JIRA_STORY_PREFIX}003 ) from the user's request or by searching Jira. If there is no issue found, use `ISSUE-TBD` as default. If there is no story found, use `STORY-TBD` as default.
 4. Retrieve the full story details including acceptance criteria from Jira.
 5. If design documentation is referenced, fetch Confluence pages for review.
@@ -239,6 +249,12 @@ Before making ANY code changes, you MUST:
 1. Transition the Jira issue to `In Progress` using a proper workflow transition (not raw status).
 2. Assign the Jira artifact to the correct person.
 3. Verify the issue appears in the active column on the sprint board.
+
+**⚠️ If Jira operations fail with "Client must be authenticated":**
+- The API token in `.claude/.atlassian.env` has expired or been revoked
+- Regenerate at https://id.atlassian.com/manage-profile/security/api-tokens
+- Update `ATLASSIAN_API_TOKEN` in `.claude/.atlassian.env`
+- Test with: `bash .claude/scripts/jira.sh me`
 
 **GATE CHECK:** Confirm Jira is initialized and the issue is in `In Progress` before proceeding. **DO NOT proceed to Gate 3 until this is complete.**
 
@@ -268,18 +284,86 @@ After all previous gates are passed and tests are posted:
 
 ---
 
+## Sprint Management — Critical Procedures
+
+### ⚠️ Pre-Sprint Checklist (Run Before First Commit of Any Sprint)
+
+Every sprint must have these three things configured in Jira BEFORE any code changes:
+
+1. **Sprint Started** — The sprint must be active (not "future" or "closed")
+2. **Stories Assigned** — All stories for the sprint must be linked to it via the Sprint field
+3. **Board Status Reflected** — Story statuses on the scrum board must match actual work state
+
+```bash
+# Verify sprint is active and has stories
+acli jira sprint view --id <SPRINT_ID>
+acli jira sprint list-workitems --sprint <SPRINT_ID> --board 34
+
+# If no stories are in the sprint, link them manually (see Known Limitations below)
+```
+
+### Post-Sprint Sync
+
+After completing work in a sprint, always update Jira:
+```bash
+# Transition completed stories to Done
+acli jira workitem transition <KEY> --transition "Done"
+
+# Add completion comments
+acli jira workitem comment <KEY> "Completed in Sprint N. See commit <hash>."
+```
+
+### Known Limitations — Story Association via CLI
+
+**The `acli` tool and REST API (with basic auth) cannot add issues to sprints.** This is a limitation of the available CLI tools:
+
+- `acli jira sprint create/update/view/list-workitems` — works for managing sprint metadata
+- `acli jira workitem edit` — does NOT support setting the Sprint field or custom fields
+- REST API v2/v3 PATCH — returns 400 Bad Request for sprint field updates with basic auth
+- Agile API POST `/sprint/{id}/issues` — requires OAuth authentication (not available via curl)
+
+**Workaround: Associate stories manually in Jira UI:**
+1. Go to https://jamescreiddev-tbs.atlassian.net/browse/P4ME
+2. For each story, click the Sprint field and select the active sprint
+3. Or use bulk edit: Select multiple issues → More → Edit Issues → set Sprint field
+
+**Stories for Sprint 1 — Foundation:**
+- P4ME-7: Set up development environment, project structure, and build tooling
+- P4ME-9: Set up database schema and migrations system
+- P4ME-23: S01 — Isar Schema & Entity Models
+- P4ME-24: S02 — Data Layer — Repository Implementation
+- P4ME-25: S03 — Navigation Shell (Bottom Nav + IndexedStack)
+
+### Jira Troubleshooting Quick Reference
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| "Client must be authenticated" | API token expired/revoked | Regenerate at id.atlassian.com, update `.claude/.atlassian.env` |
+| No stories in sprint | Stories not linked to Sprint field | Link manually in Jira UI (see Known Limitations above) |
+| Board shows wrong status | Status not transitioned after coding | Run `acli jira workitem transition <KEY> --transition "Done"` |
+| "Unknown command" from jira.sh | Script path issue | Use absolute: `bash .claude/scripts/jira.sh` |
+
+### Fallback: GitHub Issues as Sprint Tracker
+
+If Jira is unavailable, use GitHub Projects/Issues as a temporary fallback:
+- Create milestones matching sprint numbers (e.g., "Sprint 1 — Foundation")
+- Label issues with `sprint-1`, `story`, `bug` etc.
+- Use project boards for Kanban-style tracking
+
+---
+
 ## General Guardrails for Cline
 
 1. **Always respect Clean Architecture boundaries** — never let domain code depend on presentation or infrastructure.
 2. **Use `package:` imports exclusively** — the linter enforces this.
 3. **Declare all return types explicitly** — required by analysis options.
-4. **Run `build_runner` after changes to annotated classes** — Freezed, Hive, JSON, Riverpod generators must be re-run.
+4. **Run `build_runner` after changes to annotated classes** — Isar, Freezed, Hive, JSON, Riverpod generators must be re-run.
 5. **No `print()` statements** — use proper logging if needed.
 6. **Never return `null` for `Future<T>` or `String`** — handle gracefully instead.
 7. **Use `const` constructors where possible** — Flutter performance best practice.
 8. **Keep widgets small and composable** — follow Flutter widget composition patterns.
-9. **Document public APIs with doc comments** (`///`) — especially entities, providers, and repository interfaces.
-10. **When in doubt, match existing code style** — refer to `lib/domain/entities/item.dart` as a reference for entity conventions.
+9. **Document public APIs with doc comments (`///`)** — especially entities, providers, and repository interfaces.
+10. **When in doubt, match existing code style** — refer to `lib/domain/entities/entities.dart` as a reference for entity conventions.
 
 ---
 
@@ -292,7 +376,7 @@ flutter run
 # Run tests
 flutter test
 
-# Generate code (Freezed, Hive, JSON, Riverpod)
+# Generate code (Isar, Freezed, Hive, JSON, Riverpod)
 dart run build_runner build --delete-conflicting-outputs
 
 # Analyze code
@@ -303,6 +387,12 @@ dart format .
 
 # Get dependencies
 flutter pub get
+
+# Jira — search stories for current sprint
+bash .claude/scripts/jira.sh search "sprint = <NAME> AND status != Closed"
+
+# Jira — check auth
+bash .claude/scripts/jira.sh me
 ```
 
 ---
@@ -470,5 +560,4 @@ This process defines the step-by-step workflow to follow when a story or task ha
 | 12 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
 | 13 | Push changes to remote origin | ☐ | Gate 5 |
 | 14 | Create Pull Request and request reviews | ☐ | Gate 5 |
-
 

@@ -1,0 +1,12 @@
+Use the local `acli` CLI tool via bash to interact with Jira. Never use MCP tools for Jira.
+
+Common `acli` commands:
+- List projects: `acli jira project list --recent` (always include `--recent` or `--limit 50`)
+- Create a story: `acli jira workitem create --project "<PROJECT_KEY>" --type "Story" --summary "<SUMMARY>" --description "<DESCRIPTION>"`
+- View a ticket: `acli jira workitem view <ISSUE_KEY>`
+- Search tickets: `acli jira workitem search --jql "project = <PROJECT_KEY> AND status != Done" --limit 20`
+- Transition status: `acli jira workitem transition --key <ISSUE_KEY> --status "<STATUS>"`
+
+User request: $ARGUMENTS
+
+If the project key or required details are missing, run `acli jira project list --recent` or ask briefly before creating the ticket.

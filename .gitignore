@@ -55,3 +55,6 @@ Thumbs.db
 # Environment variables (if any)
 .env.local
 .env.*.local
+
+# Atlassian credentials
+.claude/.atlassian.env
