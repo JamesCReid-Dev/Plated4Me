@@ -1,3 +1,4 @@
 /// Storage implementation exports.
-library;
-
+///
+/// Re-exports all Isar-backed repository implementations from a single file.
+export 'isar_storage.dart';

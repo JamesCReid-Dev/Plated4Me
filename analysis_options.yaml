@@ -9,6 +9,10 @@ analyzer:
     - "**/*.freezed.dart"
     - "**/*.hive_adapter.g.dart"
     - "**/*.riverpod.dart"
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
   language:
     strict-raw-types: true

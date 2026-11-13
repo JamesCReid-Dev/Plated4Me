@@ -13,7 +13,9 @@ void main() {
     expect(find.byType(BottomNavigationBar), findsOneWidget);
 
     // The bottom navigation bar should have 4 items with expected labels.
-    final bottomNav = tester.widget<BottomNavigationBar>(find.byType(BottomNavigationBar));
+    final bottomNav = tester.widget<BottomNavigationBar>(
+      find.byType(BottomNavigationBar),
+    );
     expect(bottomNav.items, hasLength(4));
     expect(bottomNav.items[0].label, 'Home');
     expect(bottomNav.items[1].label, 'Browse');

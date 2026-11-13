@@ -29,7 +29,10 @@ class _AppRouterState extends State<AppRouter> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Browse'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: 'Favorites',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
@@ -43,6 +46,9 @@ class PlaceholderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Text('$label — Coming in Sprint 2+', style: Theme.of(context).textTheme.headlineMedium),
-      );
+    child: Text(
+      '$label — Coming in Sprint 2+',
+      style: Theme.of(context).textTheme.headlineMedium,
+    ),
+  );
 }

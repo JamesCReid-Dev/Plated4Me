@@ -5,14 +5,14 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme => ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.amber,
-        brightness: Brightness.light,
-      );
+    useMaterial3: true,
+    colorSchemeSeed: Colors.amber,
+    brightness: Brightness.light,
+  );
 
   static ThemeData get darkTheme => ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.amber,
-        brightness: Brightness.dark,
-      );
+    useMaterial3: true,
+    colorSchemeSeed: Colors.amber,
+    brightness: Brightness.dark,
+  );
 }
