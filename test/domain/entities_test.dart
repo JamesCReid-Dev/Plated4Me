@@ -57,6 +57,135 @@ void main() {
       expect(restaurant.toString(), contains('Test'));
       expect(restaurant.toString(), contains('123 Main'));
     });
+
+    test('allergySafeFoods sub-collection starts empty', () {
+      final restaurant = Restaurant(name: 'Test');
+
+      expect(restaurant.allergySafeFoods, isEmpty);
+    });
+
+    test('copyWith preserves allergySafeFoods when not overridden', () {
+      final original = Restaurant(name: 'Test');
+
+      final updated = original.copyWith(name: 'New Name');
+
+      expect(updated.allergySafeFoods, isEmpty);
+      expect(updated.id, equals(original.id)); // id preserved
+    });
+  });
+
+  // -- Visit ---------------------------------------------------------------------
+
+  group('Visit', () {
+    test('can be created with required fields only', () {
+      final visit = Visit(
+        restaurantId: 1,
+        foodRating: 4.0,
+        valueRating: 3.5,
+        serviceRating: 4.5,
+        overallRating: 4.0,
+        compositeScore: 3.95,
+        returnIntent: true,
+      );
+
+      expect(visit.restaurantId, equals(1));
+      expect(visit.foodRating, equals(4.0));
+      expect(visit.valueRating, equals(3.5));
+      expect(visit.serviceRating, equals(4.5));
+      expect(visit.overallRating, equals(4.0));
+      expect(visit.compositeScore, equals(3.95));
+      expect(visit.returnIntent, isTrue);
+      expect(visit.createdAt, isNotNull);
+      expect(visit.updatedAt, isNotNull);
+    });
+
+    test('optional fields default to null or empty', () {
+      final visit = Visit(
+        restaurantId: 1,
+        foodRating: 4.0,
+        valueRating: 3.5,
+        serviceRating: 4.5,
+        overallRating: 4.0,
+        compositeScore: 3.95,
+        returnIntent: false,
+      );
+
+      expect(visit.mealTotal, isNull);
+      expect(visit.tipPercent, isNull);
+      expect(visit.employeeName, isNull);
+      expect(visit.generalNotes, isNull);
+      expect(visit.blacklistReason, isNull);
+      expect(visit.blacklisted, isFalse);
+      expect(visit.occasions, isEmpty);
+    });
+
+    test('sub-collections start empty', () {
+      final visit = Visit(
+        restaurantId: 1,
+        foodRating: 4.0,
+        valueRating: 3.5,
+        serviceRating: 4.5,
+        overallRating: 4.0,
+        compositeScore: 3.95,
+        returnIntent: false,
+      );
+
+      expect(visit.journalEntries, isEmpty);
+      expect(visit.lineItems, isEmpty);
+      expect(visit.photos, isEmpty);
+      expect(visit.allergySafeFoods, isEmpty);
+    });
+
+    test('touch() updates updatedAt timestamp', () {
+      final before = DateTime.now();
+      final visit = Visit(
+        restaurantId: 1,
+        foodRating: 4.0,
+        valueRating: 3.5,
+        serviceRating: 4.5,
+        overallRating: 4.0,
+        compositeScore: 3.95,
+        returnIntent: false,
+      );
+
+      visit.touch();
+
+      expect(visit.updatedAt.isAfter(before), isTrue);
+    });
+
+    test('copyWith updates specified fields and preserves others', () {
+      final original = Visit(
+        restaurantId: 1,
+        foodRating: 4.0,
+        valueRating: 3.5,
+        serviceRating: 4.5,
+        overallRating: 4.0,
+        compositeScore: 3.95,
+        returnIntent: true,
+      );
+
+      final updated = original.copyWith(overallRating: 5.0);
+
+      expect(updated.overallRating, equals(5.0));
+      expect(updated.foodRating, equals(4.0)); // preserved
+      expect(updated.restaurantId, equals(1)); // preserved
+    });
+
+    test('toString includes restaurantId and composite score', () {
+      final visit = Visit(
+        restaurantId: 42,
+        foodRating: 4.0,
+        valueRating: 3.5,
+        serviceRating: 4.5,
+        overallRating: 4.0,
+        compositeScore: 3.95,
+        returnIntent: true,
+      );
+
+      final str = visit.toString();
+      expect(str, contains('42'));
+      expect(str, contains('3.95'));
+    });
   });
 
   // -- UserPreferences -----------------------------------------------------------
@@ -70,6 +199,8 @@ void main() {
       expect(prefs.allergies, isEmpty);
       expect(prefs.cuisinePreferences, isEmpty);
       expect(prefs.defaultOccasions, isEmpty);
+      expect(prefs.createdAt, isNotNull);
+      expect(prefs.updatedAt, isNotNull);
     });
 
     test('copyWith updates allergies', () {

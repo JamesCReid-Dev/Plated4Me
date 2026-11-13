@@ -1,10 +1,10 @@
-/// Integration tests for P4ME-9: Set up database schema and migrations system.
+/// Integration tests for P4ME-9/P4ME-23: Database schema and entity models.
 ///
 /// Validates each acceptance criterion:
 /// - AC-1: isar_flutter_libs in pubspec with proper platform config
 /// - AC-2: Isar initialized in main.dart before runApp()
-/// - AC-3: Build runner generates Isar schema adapters
-/// - AC-4: Database opens with all collections registered
+/// - AC-3: Build runner generates Isar schema adapters for all 8 collections
+/// - AC-4: Database opens with all 8 collections registered (P4ME-23)
 /// - AC-5: Migration strategy documented (manual check)
 /// - AC-6: In-memory Isar instance available for testing
 import 'dart:io';
@@ -20,6 +20,18 @@ class _TestLogger {
     // Intentionally no-op in tests; use for informational notes only.
   }
 }
+
+/// Helper: all eight Isar collection schemas registered by main.dart (P4ME-23).
+List<Object?> _schemas() => [
+  RestaurantSchema,
+  VisitSchema,
+  UserPreferencesSchema,
+  AllergySafeFoodSchema,
+  JournalEntrySchema,
+  VisitLineItemSchema,
+  PhotoAttachmentSchema,
+  AllergenSchema,
+];
 
 void main() {
   // ---------------------------------------------------------------------------
@@ -167,29 +179,57 @@ void main() {
       );
     });
 
-    test('generated file contains Isar schema classes for all collections', () {
-      final generatedFile = File(
-        '${Directory.current.path}/lib/domain/entities/entities.g.dart',
-      );
-      if (!generatedFile.existsSync()) return; // skipped if not generated
+    test(
+      'generated file contains Isar schema classes for all 8 collections',
+      () {
+        final generatedFile = File(
+          '${Directory.current.path}/lib/domain/entities/entities.g.dart',
+        );
+        if (!generatedFile.existsSync()) return; // skipped if not generated
 
-      final content = generatedFile.readAsStringSync();
-      expect(
-        content,
-        contains('RestaurantSchema'),
-        reason: 'Restaurant schema must be generated',
-      );
-      expect(
-        content,
-        contains('VisitSchema'),
-        reason: 'Visit schema must be generated',
-      );
-      expect(
-        content,
-        contains('UserPreferencesSchema'),
-        reason: 'UserPreferences schema must be generated',
-      );
-    });
+        final content = generatedFile.readAsStringSync();
+        expect(
+          content,
+          contains('RestaurantSchema'),
+          reason: 'Restaurant schema must be generated',
+        );
+        expect(
+          content,
+          contains('VisitSchema'),
+          reason: 'Visit schema must be generated',
+        );
+        expect(
+          content,
+          contains('UserPreferencesSchema'),
+          reason: 'UserPreferences schema must be generated',
+        );
+        expect(
+          content,
+          contains('AllergySafeFoodSchema'),
+          reason: 'AllergySafeFood schema must be generated (P4ME-23)',
+        );
+        expect(
+          content,
+          contains('JournalEntrySchema'),
+          reason: 'JournalEntry schema must be generated (P4ME-23)',
+        );
+        expect(
+          content,
+          contains('VisitLineItemSchema'),
+          reason: 'VisitLineItem schema must be generated (P4ME-23)',
+        );
+        expect(
+          content,
+          contains('PhotoAttachmentSchema'),
+          reason: 'PhotoAttachment schema must be generated (P4ME-23)',
+        );
+        expect(
+          content,
+          contains('AllergenSchema'),
+          reason: 'Allergen schema must be generated (P4ME-23)',
+        );
+      },
+    );
 
     test('build_runner can regenerate without errors', () async {
       // This test verifies the build configuration is valid by running
@@ -232,7 +272,10 @@ void main() {
     // ignore: no_leading_underscores_for_local_identifiers
     Future<bool> _ensureIsarAvailable() async {
       try {
-        final isar = await Isar.open([RestaurantSchema], directory: ':memory:');
+        final isar = await Isar.open(
+          _schemas().cast<CollectionSchema<dynamic>>(),
+          directory: ':memory:',
+        );
         await isar.close();
         return true;
       } catch (e) {
@@ -249,19 +292,23 @@ void main() {
       }
     }
 
-    test('Isar database opens with Restaurant, Visit, and UserPreferences collections', () async {
+    test('Isar database opens with all 8 collections (P4ME-23)', () async {
       final available = await _ensureIsarAvailable();
       if (!available) return;
       final dbPath = tempDir.path;
-      final isar = await Isar.open([
-        RestaurantSchema,
-        VisitSchema,
-        UserPreferencesSchema,
-      ], directory: dbPath);
+      final isar = await Isar.open(
+        _schemas().cast<CollectionSchema<dynamic>>(),
+        directory: dbPath,
+      );
 
       expect(isar.collection<Restaurant>(), isNotNull);
       expect(isar.collection<Visit>(), isNotNull);
       expect(isar.collection<UserPreferences>(), isNotNull);
+      expect(isar.collection<AllergySafeFood>(), isNotNull);
+      expect(isar.collection<JournalEntry>(), isNotNull);
+      expect(isar.collection<VisitLineItem>(), isNotNull);
+      expect(isar.collection<PhotoAttachment>(), isNotNull);
+      expect(isar.collection<Allergen>(), isNotNull);
 
       // Verify collections are empty initially
       expect(await isar.collection<Restaurant>().count(), equals(0));
@@ -275,11 +322,10 @@ void main() {
       final available = await _ensureIsarAvailable();
       if (!available) return;
       final dbPath = tempDir.path;
-      final isar = await Isar.open([
-        RestaurantSchema,
-        VisitSchema,
-        UserPreferencesSchema,
-      ], directory: dbPath);
+      final isar = await Isar.open(
+        _schemas().cast<CollectionSchema<dynamic>>(),
+        directory: dbPath,
+      );
 
       final restaurant = Restaurant(
         name: 'Test Bistro',
@@ -300,11 +346,10 @@ void main() {
       final available = await _ensureIsarAvailable();
       if (!available) return;
       final dbPath = tempDir.path;
-      final isar = await Isar.open([
-        RestaurantSchema,
-        VisitSchema,
-        UserPreferencesSchema,
-      ], directory: dbPath);
+      final isar = await Isar.open(
+        _schemas().cast<CollectionSchema<dynamic>>(),
+        directory: dbPath,
+      );
 
       final visit = Visit(
         restaurantId: 1,
@@ -330,11 +375,10 @@ void main() {
       final available = await _ensureIsarAvailable();
       if (!available) return;
       final dbPath = tempDir.path;
-      final isar = await Isar.open([
-        RestaurantSchema,
-        VisitSchema,
-        UserPreferencesSchema,
-      ], directory: dbPath);
+      final isar = await Isar.open(
+        _schemas().cast<CollectionSchema<dynamic>>(),
+        directory: dbPath,
+      );
 
       final prefs = UserPreferences()
         ..ratingScale = 10
@@ -357,11 +401,10 @@ void main() {
       if (!available) return;
       // Isar supports in-memory databases by using ':memory:' as the directory.
       // This is essential for fast, isolated unit tests.
-      final isar = await Isar.open([
-        RestaurantSchema,
-        VisitSchema,
-        UserPreferencesSchema,
-      ], directory: ':memory:');
+      final isar = await Isar.open(
+        _schemas().cast<CollectionSchema<dynamic>>(),
+        directory: ':memory:',
+      );
 
       expect(isar.collection<Restaurant>(), isNotNull);
       expect(isar.collection<Visit>(), isNotNull);
@@ -382,11 +425,10 @@ void main() {
       final available = await _ensureIsarAvailable();
       if (!available) return;
       final dbPath = tempDir.path;
-      final isar = await Isar.open([
-        RestaurantSchema,
-        VisitSchema,
-        UserPreferencesSchema,
-      ], directory: dbPath);
+      final isar = await Isar.open(
+        _schemas().cast<CollectionSchema<dynamic>>(),
+        directory: dbPath,
+      );
 
       // Insert multiple restaurants to verify index works
       for (var i = 0; i < 5; i++) {
@@ -476,6 +518,42 @@ void main() {
               'either via direct Isar.open/initialize or an initDatabase() call',
         );
       }
+    });
+
+    test('main.dart registers all 8 collection schemas (P4ME-23)', () {
+      final mainFile = File('${Directory.current.path}/lib/main.dart');
+      if (!mainFile.existsSync()) return;
+
+      final content = mainFile.readAsStringSync();
+      // Verify all 8 schema names appear in Isar.open() call
+      expect(content, contains('RestaurantSchema'));
+      expect(content, contains('VisitSchema'));
+      expect(content, contains('UserPreferencesSchema'));
+      expect(
+        content,
+        contains('AllergySafeFoodSchema'),
+        reason: 'AllergySafeFood must be registered (P4ME-23)',
+      );
+      expect(
+        content,
+        contains('JournalEntrySchema'),
+        reason: 'JournalEntry must be registered (P4ME-23)',
+      );
+      expect(
+        content,
+        contains('VisitLineItemSchema'),
+        reason: 'VisitLineItem must be registered (P4ME-23)',
+      );
+      expect(
+        content,
+        contains('PhotoAttachmentSchema'),
+        reason: 'PhotoAttachment must be registered (P4ME-23)',
+      );
+      expect(
+        content,
+        contains('AllergenSchema'),
+        reason: 'Allergen must be registered (P4ME-23)',
+      );
     });
   });
 
