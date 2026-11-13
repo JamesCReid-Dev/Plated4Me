@@ -155,7 +155,7 @@ class UserPreferences {
 
   // -- Allergies (FR-14, FR-16) ---------------------------------------------
   @ignore
-  List<Allergen> allergies = const [];
+  List<Allergen> allergies = [];
 
   // -- Cuisine preferences (FR-14, FR-16) -----------------------------------
   final cuisinePreferences = <String>[];
@@ -180,14 +180,23 @@ class UserPreferences {
     List<String>? defaultOccasions,
     bool? onboardingComplete,
   }) {
-    final result = UserPreferences()..id = this.id;
-    if (allergies != null) result.allergies.addAll(allergies);
-    else result.allergies.addAll(this.allergies);
-    if (cuisinePreferences != null) result.cuisinePreferences.addAll(cuisinePreferences);
-    else result.cuisinePreferences.addAll(this.cuisinePreferences);
+    final result = UserPreferences()..id = id;
+    if (allergies != null) {
+      result.allergies.addAll(allergies);
+    } else {
+      result.allergies.addAll(this.allergies);
+    }
+    if (cuisinePreferences != null) {
+      result.cuisinePreferences.addAll(cuisinePreferences);
+    } else {
+      result.cuisinePreferences.addAll(this.cuisinePreferences);
+    }
     result.ratingScale = ratingScale ?? this.ratingScale;
-    if (defaultOccasions != null) result.defaultOccasions.addAll(defaultOccasions);
-    else result.defaultOccasions.addAll(this.defaultOccasions);
+    if (defaultOccasions != null) {
+      result.defaultOccasions.addAll(defaultOccasions);
+    } else {
+      result.defaultOccasions.addAll(this.defaultOccasions);
+    }
     result.onboardingComplete = onboardingComplete ?? this.onboardingComplete;
     return result;
   }

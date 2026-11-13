@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'presentation/theme/app_theme.dart';
-import 'presentation/navigation/app_router.dart';
+import 'package:plated4me/presentation/navigation/app_router.dart';
+import 'package:plated4me/presentation/theme/app_theme.dart';
 
 void main() {
   runApp(const ProviderScope(child: Plated4MeApp()));

@@ -29,7 +29,7 @@ linter:
     prefer_const_constructors: true
     prefer_const_declarations: true
     prefer_const_literals_to_create_immutables: true
-    sort_pub_dependencies: true
+    # sort_pub_dependencies: false — SDK deps (flutter, flutter_test) complicate strict alpha sort
     unnecessary_this: true
     prefer_final_fields: true
     use_key_in_widget_constructors: true

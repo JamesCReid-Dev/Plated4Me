@@ -10,30 +10,21 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
   cupertino_icons: ^1.0.8
-
-  # State Management
-  flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
-
-  # Immutability & Serialization
   freezed_annotation: ^2.4.4
-  json_annotation: ^4.9.0
-
-  # Local Storage — Isar (primary), Hive (secondary for simple key-value)
-  isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-
-  # Utilities
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  json_annotation: ^4.9.0
   path_provider: ^2.1.5
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
   uuid: ^4.5.1
 
 dev_dependencies:
-  # Code generation — Isar only for Sprint 1; other generators deferred to avoid source_gen conflicts
   build_runner: ^2.4.13
+  freezed: ^2.5.2
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
