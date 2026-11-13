@@ -165,6 +165,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ### Epic 1: Foundation & Setup
 
 #### S01: Isar Schema & Entity Models
+| P4ME-1 |
+
+Isar Schema & Entity Models
 
 **As a** developer, **I want** well-defined Isar entity models for all domain concepts, **so that** the data layer has a consistent schema to work with.
 
@@ -183,6 +186,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ---
 
 #### S02: Data Layer — Repository Implementation
+| P4ME-2 |
+
+Data Layer — Repository Implementation
 
 **As a** developer, **I want** repository interfaces implemented over Isar using Riverpod AsyncNotifiers, **so that** all layers interact with data through consistent abstractions.
 
@@ -199,6 +205,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ---
 
 #### S03: Navigation Shell (Bottom Nav + IndexedStack)
+| P4ME-3 |
+
+Navigation Shell (Bottom Nav + IndexedStack)
 
 **As a** developer, **I want** a bottom navigation bar with three tabs and IndexedStack state preservation, **so that** users can switch between Browse, Favorites, and Settings without losing their place.
 
@@ -215,6 +224,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ---
 
 #### S04: Onboarding Flow
+| P4ME-7 |
+
+Onboarding Flow
 
 **As a** new user, **I want** a guided first-run setup that captures my allergies, cuisine preferences, rating scale, and default occasions, **so that** the app is personalized from the start.
 
@@ -232,6 +244,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ---
 
 #### S05: Settings & Preferences
+| P4ME-8 |
+
+Settings & Preferences
 
 **As a** user, **I want** to manage my allergies, rating scale, and data export from Settings, **so that** I can update preferences after onboarding.
 
@@ -251,6 +266,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ### Epic 2: Core Visit Logging
 
 #### S06: Restaurant ID & Deduplication
+| P4ME-9 |
+
+Restaurant ID & Deduplication
 
 **As a** user, **I want** to identify a restaurant by name with auto-suggestions and automatic deduplication, **so that** I can start logging quickly without worrying about duplicate entries.
 
@@ -267,6 +285,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ---
 
 #### S07: Ratings Screen (4 Sliders + Composite Score)
+| P4ME-10 |
+
+Ratings Screen (4 Sliders + Composite Score)
 
 **As a** user, **I want** to rate my visit using four weighted sliders with real-time composite score feedback, **so that** I can capture my experience quickly and accurately.
 
@@ -285,6 +306,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ---
 
 #### S08: Optional Sections Accordion
+| P4ME-11 |
+
+Optional Sections Accordion
 
 **As a** user, **I want** to add optional details like meal total, journal entries, and allergy-safe foods in expandable sections that never block saving, **so that** I can log the essentials quickly and add richness later.
 
@@ -305,6 +329,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ---
 
 #### S09: Media — Photos & Voice Notes
+| P4ME-12 |
+
+Media — Photos & Voice Notes
 
 **As a** user, **I want** to attach photos and voice notes to my visit log, **so that** I can capture visual and audio context alongside my written impressions.
 
@@ -323,6 +350,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ### Epic 3: Browse & Discover
 
 #### S10: Filterable Visit Card List
+| P4ME-13 |
+
+Filterable Visit Card List
 
 **As a** user, **I want** to browse my visit history as filterable cards showing restaurant name, date, composite score, and return intent, **so that** I can quickly scan past experiences.
 
@@ -343,6 +373,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ---
 
 #### S11: Full-Text Search
+| P4ME-14 |
+
+Full-Text Search
 
 **As a** user, **I want** to search across all my visit data with relevant results ranked by importance, **so that** I can find specific restaurants, dishes, or notes quickly.
 
@@ -370,6 +403,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ---
 
 #### S12: Restaurant Detail View
+| P4ME-15 |
+
+Restaurant Detail View
 
 **As a** user, **I want** to see a restaurant's complete profile including allergy-safe list, general notes, and visit history, **so that** I can make informed decisions before visiting.
 
@@ -388,6 +424,9 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 ### Epic 4: Favorites & Organization
 
 #### S13: Favorites Computation & Display
+| P4ME-16 |
+
+Favorites Computation & Display
 
 **As a** user, **I want** my favorite restaurants auto-surfaced in the Browse list, **so that** I can quickly see my best dining experiences.
 
@@ -406,7 +445,10 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 
 ---
 
-#### S14: Occasion Tagging
+#### S14: Blacklist — Mark visits as blacklisted
+| P4ME-18 |
+
+Occasion Tagging
 
 **As a** user, **I want** to tag my visits with occasions like "Date Night" or "Business Lunch," **so that** I can filter by occasion when planning future meals.
 
@@ -421,7 +463,10 @@ From DESIGN.md + EXPERIENCE.md spine pair:
 
 ---
 
-#### S15: Blacklist / Avoid List
+#### S15: Restaurant Detail View (Comprehensive)
+| P4ME-20 |
+
+Blacklist / Avoid List
 
 **As a** user, **I want** to blacklist bad restaurant visits so they don't pollute my favorites and I remember what to avoid.
 

@@ -1,6 +1,11 @@
 {
   "atlassian": {
     "type": "stdio",
-    "command": "/Users/jcreid/Documents/SW_DEV/Projects/Plated4Me/.claude/atlassian-mcp-wrapper.sh"
+    "command": "atlassian-mcp",
+    "env": {
+      "ATLASSIAN_BASE_URL": "https://jamescreiddev-tbs.atlassian.net",
+      "ATLASSIAN_API_TOKEN": "ATATT3xFfGF0Zu_iPireMhaAX9bFvFWGJSHHotWBt8xrGvJrZVEU0W_hLBQFy8GCD7cFuepNgnrE3MXx4b269ucAs9vGfpOfhWKPzJ2atKMFc9600b2WKTtDevPKlsQguMvjU7xQAzfAJDrzChCzxrEiwr4lmS-bO3eqwYJYut7sSHQf9fIh62w=476C9B29",
+      "ATLASSIAN_USERNAME": "jamescreid.dev@gmail.com"
+    }
   }
 }
