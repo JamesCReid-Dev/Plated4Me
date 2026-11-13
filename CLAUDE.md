@@ -539,6 +539,121 @@ This process defines the step-by-step workflow to follow when a story or task ha
 
 ---
 
+### Phase 5: Build & Deploy (Post-PR)
+
+After the PR is created and merged (or if deploying directly from the feature branch), build and deploy the app to all supported platforms. **Run each platform sequentially — do not parallelize.** Wait for each build/deploy to complete before starting the next.
+
+#### 5a. iOS — Build, Deploy & Run in Simulator
+
+1. **Identify an available iPhone simulator** (prefer the latest model):
+   ```bash
+   xcrun simctl list devices available | grep -i iphone
+   ```
+
+2. **Boot the selected iPhone simulator:**
+   ```bash
+   xcrun simctl boot "<iPhone Model>"
+   ```
+
+3. **Ensure dependencies are up to date:**
+   ```bash
+   flutter pub get
+   ```
+
+4. **Build and deploy to the iOS simulator (debug mode):**
+   ```bash
+   flutter run -d "<iPhone Model>"
+   ```
+
+5. **Bring the Simulator window to the foreground** so the app is visible:
+   ```bash
+   open -a "Simulator" 2>/dev/null || osascript -e 'tell application "Simulator" to activate' 2>/dev/null
+   ```
+   If the above fails (newer Xcode versions may not have a standalone Simulator.app), try:
+   ```bash
+   # Check for any simulator UI process and activate it
+   ps aux | grep -i "[S]imulator" | head -5
+   ```
+
+6. **Verify the app launches** in the simulator — check for errors in the console output.
+
+7. **Stop the flutter run process** cleanly:
+   ```bash
+   pkill -f "flutter run" 2>/dev/null; sleep 1
+   ```
+
+#### 5b. Android — Build, Deploy & Run in Emulator
+
+1. **List available Android virtual devices (AVDs):**
+   ```bash
+   avdmanager list avd
+   # or: flutter emulators --launch <emulator-id>
+   ```
+
+2. **Launch the Android emulator:**
+   ```bash
+   flutter emulators --launch <emulator-id>
+   # Wait for it to boot (check with: adb devices)
+   sleep 30
+   ```
+
+3. **Ensure dependencies are up to date:**
+   ```bash
+   flutter pub get
+   ```
+
+4. **Build and deploy to the Android emulator:**
+   ```bash
+   flutter run -d <emulator-id>
+   ```
+
+5. **Verify the app launches** in the emulator — check for errors in the console output.
+
+6. **Stop the flutter run process** cleanly:
+   ```bash
+   pkill -f "flutter run" 2>/dev/null; sleep 1
+   ```
+
+#### 5c. macOS — Build & Run Desktop App
+
+1. **Ensure dependencies are up to date:**
+   ```bash
+   flutter pub get
+   ```
+
+2. **Build and run the macOS desktop app:**
+   ```bash
+   flutter run -d macos
+   ```
+
+3. **Verify the app launches** on macOS — check for errors in the console output.
+
+4. **Stop the flutter run process** cleanly:
+   ```bash
+   pkill -f "flutter run" 2>/dev/null; sleep 1
+   ```
+
+#### 5d. Chrome Web — Build & Run in Browser
+
+1. **Ensure dependencies are up to date:**
+   ```bash
+   flutter pub get
+   ```
+
+2. **Build and run the web app in Chrome:**
+   ```bash
+   flutter run -d chrome --web-browser-flag="--disable-web-security"
+   ```
+
+3. **Verify the app launches** in Chrome — check for errors in the console output.
+
+4. **Stop the flutter run process** cleanly:
+   ```bash
+   pkill -f "flutter run" 2>/dev/null; sleep 1
+   ```
+
+---
+
 ## Quick Reference Checklist
 
 | Step | Action | Done? | Gate |
@@ -560,4 +675,9 @@ This process defines the step-by-step workflow to follow when a story or task ha
 | 12 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
 | 13 | Push changes to remote origin | ☐ | Gate 5 |
 | 14 | Create Pull Request and request reviews | ☐ | Gate 5 |
+| **GATE 5 PASSED — Build & Deploy now permitted** | | | |
+| 15a | iOS: Boot iPhone simulator → `flutter pub get` → `flutter run -d "<iPhone>"` → verify launch → stop | ☐ | Phase 5 |
+| 15b | Android: Launch AVD emulator → `flutter pub get` → `flutter run -d <emulator>` → verify launch → stop | ☐ | Phase 5 |
+| 15c | macOS: `flutter pub get` → `flutter run -d macos` → verify launch → stop | ☐ | Phase 5 |
+| 15d | Chrome Web: `flutter pub get` → `flutter run -d chrome` → verify launch → stop | ☐ | Phase 5 |
 
