@@ -163,13 +163,65 @@ All generated files live alongside their source with `.g.dart`, `.freezed.dart`,
 
 ---
 
-## Testing Guidelines
+## Testing Guidelines & TDD Process
 
-- Test files go in `test/` alongside `lib/`
-- Follow the existing naming pattern: `main_test.dart`, `widget_test.dart`
-- Use `flutter_test` package for widget and unit tests
-- Mock repositories/interfaces at layer boundaries
-- Test domain logic in isolation (no Flutter framework needed)
+### Test-Driven Development (TDD) — Mandatory Process
+
+This project follows strict **Test-Driven Development** with the Red-Green-Refactor cycle. Every story MUST go through these three phases:
+
+#### Phase R — Red (QA Agent / Test Engineer)
+
+1. **Read the story** from Jira, including all acceptance criteria and design documentation.
+2. **Create a test plan** mapping each acceptance criterion to one or more test cases.
+3. **Write failing tests** for every acceptance criterion — tests must FAIL before any production code exists.
+4. **Verify all new tests fail** — run `flutter test` on the new test files and confirm failures.
+5. **Report results to Jira** with coverage matrix showing AC-to-test mapping.
+
+> **Rule:** No production code may be written during the Red Phase. The sole output is a suite of failing tests that, if passed, would satisfy every acceptance criterion.
+
+#### Phase G — Green (Developer)
+
+1. **Read the failing tests** created in the Red Phase — these define what "done" means.
+2. **Implement production code** solely to make the failing tests pass.
+3. **Write minimal code** — only enough to turn red tests green; no extra features.
+4. **Run all tests** — every new test must now pass, and no existing test may break.
+5. **Verify acceptance criteria** — each passing test corresponds to an AC; confirm full coverage.
+
+> **Rule:** The developer's job is to make tests pass, not to decide what tests should exist. If a test needs changing, discuss with QA first.
+
+#### Phase Rf — Refactor (Developer + QA)
+
+1. **Refactor production code** now that tests provide a safety net.
+2. **Apply DRY, SRP, and Clean Architecture principles.**
+3. **Remove duplication**, extract abstractions, improve naming.
+4. **Run full test suite** after every refactor — all tests must continue to pass.
+5. **Refactor tests too** if they have duplicated setup or unclear structure.
+
+> **Rule:** Refactoring is NOT adding features. If you add functionality during refactor, go back to Green Phase for that new functionality.
+
+### Test File Organization
+
+- Test files go in `test/` alongside `lib/`, mirroring the layer structure:
+  - `test/domain/` — domain entity and value object tests
+  - `test/application/` — provider and use case tests
+  - `test/presentation/` — widget and UI tests
+  - `test/infrastructure/` — storage implementation tests
+  - `test/integration/` — cross-layer integration tests
+- Follow the existing naming pattern: `<subject>_test.dart` (e.g., `restaurant_test.dart`, `restaurant_provider_test.dart`).
+- Use `flutter_test` package for widget and unit tests.
+- Mock repositories/interfaces at layer boundaries.
+- Test domain logic in isolation (no Flutter framework needed).
+
+### Test Writing Conventions
+
+- Group tests by entity/provider/widget using `group()`.
+- Use descriptive test names that reference the acceptance criterion being tested: `test('AC1 — creates restaurant with required name only', () { ... })`.
+- Use `package:` imports exclusively.
+- Declare all return types explicitly.
+- No `print()` statements; use proper assertions.
+- Tests must be self-contained and deterministic — no flaky tests.
+- For async code, use `await` and `expectLater(..., completes)` appropriately.
+- For widget tests: `testWidgets('<description>', (WidgetTester tester) async { ... })`.
 
 ---
 
@@ -256,29 +308,63 @@ Before making ANY code changes, you MUST:
 - Update `ATLASSIAN_API_TOKEN` in `.claude/.atlassian.env`
 - Test with: `bash .claude/scripts/jira.sh me`
 
-**GATE CHECK:** Confirm Jira is initialized and the issue is in `In Progress` before proceeding. **DO NOT proceed to Gate 3 until this is complete.**
+**GATE CHECK:** Confirm Jira is initialized and the issue is in `In Progress` before proceeding. **DO NOT proceed to Gate 2.5 until this is complete.**
 
-### Gate 3: Implementation (Code Changes Allowed)
+### Gate 2.5: TDD Red Phase — QA Test Creation
 
-Only after Gates 0, 1, and 2 are passed may you begin implementing code changes. All implementation must follow Clean Architecture boundaries, naming conventions, and testing guidelines defined elsewhere in this document.
+Before ANY production code may be written, you MUST complete the TDD Red Phase:
 
-**GATE CHECK:** Confirm all acceptance criteria are met and tests pass before proceeding to Gate 4. **DO NOT proceed to Gate 4 until this is complete.**
+1. **Invoke or act as the QA Agent** (`.claude/agents`) to read the story from Jira.
+2. **Create a test plan** mapping each acceptance criterion to specific test cases across appropriate layers (domain, application, presentation, infrastructure).
+3. **Write failing tests** for every acceptance criterion — these tests MUST fail when run because the production code does not yet exist.
+4. **Verify all new tests FAIL** by running `flutter test` on the newly created test files. Confirm each failure is genuine (not a false positive from skipped tests or incorrect setup).
+5. **Post Red Phase results to Jira** as a comment with:
+   - List of test files created
+   - Acceptance criteria coverage matrix (which AC maps to which test)
+   - Full `flutter test` output showing all new tests FAILING
 
-### Gate 4: Test Results Posted to Jira
+> **Critical Rule:** If any newly written test passes during the Red Phase, investigate why. A passing test means either:
+> - The functionality already exists (remove from this story's scope)
+> - The test has a bug in its assertion (fix the test)
+> - The test is testing something outside this story's scope (move to appropriate story)
 
-Before transitioning the issue status, you MUST:
-1. Run `flutter test` and ensure ALL tests pass.
-2. Post the full test results as a comment on the Jira story in the required format.
+**GATE CHECK:** Confirm all acceptance criteria have corresponding failing tests and results are posted to Jira. **DO NOT proceed to Gate 3 until this is complete.**
+
+### Gate 3: TDD Green Phase — Implementation (Code Changes Allowed)
+
+Only after Gates 0, 1, 2, and 2.5 are passed may you begin implementing production code. All implementation must follow Clean Architecture boundaries, naming conventions, and the **Green Phase** discipline defined elsewhere in this document.
+
+**Green Phase Rules:**
+- Read and understand the failing tests created by QA — they define "done."
+- Write ONLY enough production code to make the red tests pass. No extra features.
+- After each test passes, run the full suite to ensure no existing tests break.
+- Verify every acceptance criterion has at least one passing test.
+
+**GATE CHECK:** Confirm all acceptance criteria are met and ALL tests (new + existing) pass before proceeding to Gate 4. **DO NOT proceed to Gate 4 until this is complete.**
+
+### Gate 4: TDD Refactor Phase & Final Test Verification
+
+Before transitioning the issue status, you MUST complete both the Refactor Phase and test verification:
+
+1. **Refactor Phase (Rf):** With tests as a safety net, refactor production code to apply DRY, SRP, and Clean Architecture principles. Also clean up any duplicated test setup. Run full suite after every change — all tests must continue passing.
+2. **Run `flutter test`** and ensure ALL tests pass (new + existing + refactored).
+3. **Post the full test results as a comment on the Jira story** in the required format below.
+
+> **Rule:** Refactoring is NOT adding features. If you discover new functionality needed, create a new story for it rather than expanding scope during refactor.
 
 **GATE CHECK:** Confirm test results are posted as a Jira comment before proceeding. **DO NOT transition to In Review until this is complete.**
 
-### Gate 5: Commit, Push & PR
+### Gate 5: Commit, Push & PR (Post-TDD)
 
-After all previous gates are passed and tests are posted:
+After all TDD phases (Red → Green → Refactor) are complete and tests are posted:
 1. Transition the Jira issue status (e.g., to `In Review`).
-2. Stage and commit with message `<jira-id>-<status>`.
+2. Stage and commit with message `<jira-id>-<status>`. Include a summary of which TDD phase each commit represents if multiple commits are made.
 3. Push to remote origin.
-4. Create a Pull Request linking to the Jira artifact.
+4. Create a Pull Request linking to the Jira artifact, referencing:
+   - The Red Phase test files created by QA
+   - The Green Phase implementation
+   - Any Refactor changes
+   - The Jira comment with final test results
 
 **GATE CHECK:** Confirm PR is created and linked before considering the story complete.
 
@@ -364,6 +450,7 @@ If Jira is unavailable, use GitHub Projects/Issues as a temporary fallback:
 8. **Keep widgets small and composable** — follow Flutter widget composition patterns.
 9. **Document public APIs with doc comments (`///`)** — especially entities, providers, and repository interfaces.
 10. **When in doubt, match existing code style** — refer to `lib/domain/entities/entities.dart` as a reference for entity conventions.
+11. **Follow TDD discipline** — tests must fail before implementation (Red), pass after implementation (Green), then clean up (Refactor). Never write production code without a failing test driving it.
 
 ---
 
@@ -475,49 +562,98 @@ This process defines the step-by-step workflow to follow when a story or task ha
 
 5. **Assign the Jira artifact** to the requestor/assignee unless a specific assignee was called out in the story description or comments. Use the same person for both the Jira assignment and the branch ownership.
 
-### Phase 3: Implementation & Testing (Gate 2 → Gate 3)
+### Phase 3: TDD Red Phase — QA Test Creation (Gate 2 → Gate 2.5)
 
-6. **Implement the story requirements** following Clean Architecture boundaries, naming conventions, and code generation rules defined elsewhere in this document.
-
-7. **Ensure automated testing is part of the story acceptance criteria (A/C):**
-   - Write unit tests for domain logic and business rules
-   - Write widget/integration tests for UI changes
-   - Ensure all existing tests continue to pass
-   - Run `flutter test` locally before committing
-
-8. **Review design documentation for impacted changes:**
+6. **Review design documentation** for impacted changes:
    - Check Confluence pages in the **"Plated4Me"** space if architecture, API specs, or user-facing docs are affected by this story
    - Check Figma designs if UI/UX changes are made
    - If NO design updates needed: note "No design changes required for this story" in Jira comments
-   - If design updates ARE needed: update Confluence/Figma first, then link to updated design in Jira before proceeding
 
-9. **Execute all tests and add results to the Jira artifact:**
-    - Run `flutter test` locally and ensure ALL tests pass (no failures, no errors)
-    - Capture the full test output including: total tests run, passed/failed counts, any coverage metrics
-    - Post the test results as a **comment on the Jira story** with the following format:
-      ```
-      ## Test Results
-      - Total tests: X
-      - Passed: X
-      - Failed: 0
-      - Errors: 0
+7. **Act as (or invoke) the QA Agent** to read the full story from Jira, including all acceptance criteria and design context.
 
-      ### Test Output
-      [paste full flutter test output here]
+8. **Create a test plan** mapping each acceptance criterion to specific test cases across appropriate layers:
+   - Domain tests for entity logic and value objects
+   - Application tests for providers and use cases
+   - Presentation tests for widgets and UI behavior
+   - Infrastructure tests for storage implementations
 
-      ### Files Tested
-      - test/path/to/file_test.dart
-      - test/another_file_test.dart
-      ```
-    - Include any manual testing notes if applicable
+9. **Write failing tests** for every acceptance criterion — these tests MUST fail when run because the production code does not yet exist:
+   - One test file per logical feature area, following existing naming patterns
+   - Use `group()` to organize tests by entity/provider/widget
+   - Include at least one negative/edge-case test per AC
+   - Follow all project conventions (package imports, explicit return types, no print)
 
-10. **Only after ALL tests pass and results are posted as a Jira comment, transition to In Review.**
+10. **Verify ALL new tests FAIL** by running `flutter test` on the newly created files. Confirm each failure is genuine.
 
-### Phase 4: Code Review & Pull Request (Gate 3 → Gate 5)
+11. **Post Red Phase results to Jira** as a comment:
+    ```
+    ## TDD Red Phase — Test Creation Complete
+    - Story: <JIRA_KEY>: <Summary>
+    - Tests Written: X test(s) across Y file(s)
+    - All Tests Failing: ✅ Confirmed
 
-10. **Update the Jira artifact status to `In Review`** once implementation is complete and all acceptance criteria are met.
+    ### Files Created
+    - test/<path>/<test_file>.dart — covers AC 1, AC 2, ...
+    - test/<path>/<test_file>.dart — covers AC 3, AC 4, ...
 
-11. **Stage and commit all changed files** with a commit message following this pattern:
+    ### Test Failures Verified
+    [paste flutter test output showing all new tests FAIL]
+
+    ### Acceptance Criteria Coverage
+    | AC # | Description | Test File | Test Count |
+    |------|-------------|-----------|------------|
+    | 1    | ...         | ...       | X          |
+    | 2    | ...         | ...       | X          |
+
+    **Status:** Ready for Green Phase (developer implementation).
+    ```
+
+> **Critical Rule:** No production code may be written during the Red Phase. The sole output is a suite of failing tests that, if passed, would satisfy every acceptance criterion. If any new test passes unexpectedly, investigate and adjust — all newly written tests must fail.
+
+### Phase 4: TDD Green & Refactor Phases — Implementation (Gate 2.5 → Gate 3 → Gate 4)
+
+12. **Green Phase:** Read the failing tests created in the Red Phase — they define "done." Implement ONLY enough production code to make those tests pass. No extra features, no scope expansion.
+
+13. **Verify each test turns green** as you implement. After each passing test, run the full suite to ensure no existing test breaks.
+
+14. **Refactor Phase (Rf):** With tests as a safety net, refactor production code to apply DRY, SRP, and Clean Architecture principles. Also clean up duplicated test setup. Run full suite after every change — all tests must continue passing. Refactoring is NOT adding features; if new functionality is needed, create a new story.
+
+15. **Execute final `flutter test`** and ensure ALL tests pass (new + existing + refactored).
+
+16. **Post final test results to Jira** as a comment:
+    ```
+    ## Test Results — TDD Complete (Red → Green → Refactor)
+    - Total tests: X
+    - Passed: X
+    - Failed: 0
+    - Errors: 0
+
+    ### Test Output
+    [paste full flutter test output here]
+
+    ### Files Tested
+    - test/path/to/file_test.dart
+    - test/another_file_test.dart
+
+    ### TDD Phases Completed
+    - Red Phase: X test(s) written across Y file(s), all initially failing ✅
+    - Green Phase: All red tests now passing ✅
+    - Refactor Phase: Code cleaned, no behavior changes, all tests still passing ✅
+
+    ### Acceptance Criteria Met
+    | AC # | Status | Verified By |
+    |------|--------|-------------|
+    | 1    | ✅ Met | test_<name>.dart |
+    | 2    | ✅ Met | test_<name>.dart |
+    ```
+
+17. **Only after ALL tests pass and results are posted as a Jira comment, transition to In Review.**
+
+### Phase 5: Code Review & Pull Request (Gate 4 → Gate 5)
+
+18. **Update the Jira artifact status to `In Review`** once implementation is complete and all acceptance criteria are met.
+
+19. **Stage and commit all changed files** with a commit message following this pattern:
     ```
     <jira-artifact-id>-<status>
     ```
@@ -526,20 +662,20 @@ This process defines the step-by-step workflow to follow when a story or task ha
 
     **Example:** `IS-123-dev-complete` or `IS-99-bugfix-resolved`
 
-12. **Push all committed files to the remote origin repository:**
+20. **Push all committed files to the remote origin repository:**
     ```bash
     git push origin <branch-name>
     ```
 
-13. **Create a Pull Request (PR)** from the feature branch to the target branch (typically `main` or `develop`):
+21. **Create a Pull Request (PR)** from the feature branch to the target branch (typically `main` or `develop`):
     - Link the PR to the Jira artifact in the PR description
-    - Include a summary of changes, test results, and any notes for reviewers
+    - Include a summary of TDD phases completed, test results, and any notes for reviewers
     - Reference impacted Confluence pages or Figma designs where applicable
     - Request reviews from appropriate team members
 
 ---
 
-### Phase 5: Build & Deploy (Post-PR)
+### Phase 6: Build & Deploy (Post-PR)
 
 After the PR is created and merged (or if deploying directly from the feature branch), build and deploy the app to all supported platforms. **Run each platform sequentially — do not parallelize.** Wait for each build/deploy to complete before starting the next.
 
@@ -665,19 +801,54 @@ After the PR is created and merged (or if deploying directly from the feature br
 | 4 | Transition Jira issue to In Progress (proper workflow transition, not raw status) | ☐ | Gate 2 |
 | 5 | Verify issue appears in correct swimlane/column on sprint board | ☐ | Gate 2 |
 | 6 | Assign Jira artifact to correct person | ☐ | Gate 2 |
-| **GATE 1 & 2 PASSED — Code changes now permitted** | | | |
-| 7 | Implement story per acceptance criteria | ☐ | Gate 3 |
-| 8 | Review design docs (Confluence/Figma) — if no changes needed, note "No design changes required" in Jira | ☐ | Gate 3 |
-| 9 | Run `flutter test` — ensure ALL tests pass | ☐ | Gate 4 |
-| 10 | Post test results as comment on Jira story (total, passed/failed, full output) | ☐ | Gate 4 |
+| **GATE 1 & 2 PASSED — Red Phase may begin** | | | |
+| 7 | Review design docs (Confluence/Figma) — if no changes needed, note "No design changes required" in Jira | ☐ | Gate 2.5 |
+| 8 | QA Agent reads story from Jira and creates test plan mapping AC → tests | ☐ | Gate 2.5 |
+| 9 | Write failing tests for every acceptance criterion (Red Phase) | ☐ | Gate 2.5 |
+| 10 | Verify ALL new tests FAIL with `flutter test` | ☐ | Gate 2.5 |
+| 11 | Post Red Phase results to Jira comment (files, coverage matrix, failure output) | ☐ | Gate 2.5 |
+| **GATE 2.5 PASSED — Green Phase may begin** | | | |
+| 12 | Read failing tests from QA — they define "done" | ☐ | Gate 3 |
+| 13 | Implement ONLY enough code to make red tests pass (Green Phase) | ☐ | Gate 3 |
+| 14 | Refactor production and test code with safety net of passing tests (Refactor Phase) | ☐ | Gate 4 |
+| 15 | Run `flutter test` — ensure ALL tests (new + existing) pass | ☐ | Gate 4 |
+| 16 | Post final TDD results to Jira comment (Red/Green/Refactor summary, full output, AC matrix) | ☐ | Gate 4 |
 | **GATE 4 PASSED — Status transition now permitted** | | | |
-| 11 | Only after tests posted: Transition Jira status to In Review | ☐ | Gate 5 |
-| 12 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
-| 13 | Push changes to remote origin | ☐ | Gate 5 |
-| 14 | Create Pull Request and request reviews | ☐ | Gate 5 |
+| 17 | Only after tests posted: Transition Jira status to In Review | ☐ | Gate 5 |
+| 18 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
+| 19 | Push changes to remote origin | ☐ | Gate 5 |
+| 20 | Create Pull Request referencing TDD phases and Jira test results | ☐ | Gate 5 |
 | **GATE 5 PASSED — Build & Deploy now permitted** | | | |
-| 15a | iOS: Boot iPhone simulator → `flutter pub get` → `flutter run -d "<iPhone>"` → verify launch → stop | ☐ | Phase 5 |
-| 15b | Android: Launch AVD emulator → `flutter pub get` → `flutter run -d <emulator>` → verify launch → stop | ☐ | Phase 5 |
-| 15c | macOS: `flutter pub get` → `flutter run -d macos` → verify launch → stop | ☐ | Phase 5 |
-| 15d | Chrome Web: `flutter pub get` → `flutter run -d chrome` → verify launch → stop | ☐ | Phase 5 |
+| 15a | iOS: Boot iPhone simulator → `flutter pub get` → `flutter run -d "<iPhone>"` → verify launch → stop | ☐ | Phase 6 |
+| 15b | Android: Launch AVD emulator → `flutter pub get` → `flutter run -d <emulator>` → verify launch → stop | ☐ | Phase 6 |
+| 15c | macOS: `flutter pub get` → `flutter run -d macos` → verify launch → stop | ☐ | Phase 6 |
+| 15d | Chrome Web: `flutter pub get` → `flutter run -d chrome` → verify launch → stop | ☐ | Phase 6 |
+
+---
+
+## TDD Quick Reference — Red → Green → Refactor
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    TDD CYCLE (per acceptance criterion)      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  RED    ← QA writes failing test(s) for one AC              │
+│   │       flutter test → FAIL confirmed                     │
+│   ▼                                                       │
+│  GREEN  ← Dev writes MINIMAL code to make test pass         │
+│   │       flutter test → PASS (all tests)                   │
+│   ▼                                                       │
+│  REFACT← Dev cleans up code + tests, all still pass         │
+│   │       flutter test → PASS (all tests)                   │
+│   ▼                                                       │
+│  Next AC → repeat cycle                                     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+Per Story Flow:
+  Gate 2.5 (Red Phase):  ALL failing tests written first
+  Gate 3   (Green Phase): ALL red tests turned green
+  Gate 4   (Refactor):    Code cleaned, all still passing
+```
 

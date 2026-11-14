@@ -1,17 +1,18 @@
 /// Repository interface for [UserPreferences] entities.
 ///
-/// There is exactly one [UserPreferences] record per device (fixed ID = 1).
+/// Defines the contract for managing user preferences, including
+/// an existence check used as the onboarding gate (AC-3, P4ME-24).
 import 'package:plated4me/domain/entities/entities.dart';
 
 abstract class UserPreferencesRepository {
-  /// Returns the singleton user preferences record.
-  ///
-  /// If no record exists, creates and returns a default instance.
+  /// Returns user preferences, creating defaults if none exist.
   Future<UserPreferences> getUserPreferences();
 
-  /// Updates the user preferences record.
-  ///
-  /// The [preferences] must have `id == 1`. All fields are overwritten
-  /// with the values from [preferences].
+  /// Saves user preferences (single record per device, ID=1).
   Future<UserPreferences> saveUserPreferences(UserPreferences preferences);
+
+  /// Checks whether user preferences exist in the database.
+  ///
+  /// Used as the onboarding gate: if false, show onboarding flow (AC-3, AD-6).
+  Future<bool> hasPreferences();
 }

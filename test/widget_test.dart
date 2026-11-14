@@ -7,7 +7,7 @@ import 'package:plated4me/main.dart';
 void main() {
   testWidgets('App launches without crashing', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: Plated4MeApp()));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     // The app should render a bottom navigation bar.
     expect(find.byType(BottomNavigationBar), findsOneWidget);
@@ -22,7 +22,7 @@ void main() {
     expect(bottomNav.items[2].label, 'Favorites');
     expect(bottomNav.items[3].label, 'Profile');
 
-    // The initial page should be the placeholder home page.
-    expect(find.text('Home — Coming in Sprint 2+'), findsOneWidget);
+    // The initial page is the home screen with Recent Visits AppBar.
+    expect(find.text('Recent Visits'), findsOneWidget);
   });
 }
