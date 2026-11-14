@@ -1,5 +1,9 @@
-/// App router — manages top-level navigation and route guards.
+/// App router — manages top-level navigation with real screens wired to Riverpod providers.
 import 'package:flutter/material.dart';
+import 'package:plated4me/presentation/screens/browse_screen.dart';
+import 'package:plated4me/presentation/screens/favorites_screen.dart';
+import 'package:plated4me/presentation/screens/home_screen.dart';
+import 'package:plated4me/presentation/screens/profile_screen.dart';
 
 class AppRouter extends StatefulWidget {
   const AppRouter({super.key});
@@ -12,16 +16,16 @@ class _AppRouterState extends State<AppRouter> {
   int _currentIndex = 0;
 
   static const List<Widget> _pages = [
-    PlaceholderPage(label: 'Home'),
-    PlaceholderPage(label: 'Browse'),
-    PlaceholderPage(label: 'Favorites'),
-    PlaceholderPage(label: 'Profile'),
+    HomeScreen(),
+    BrowseScreen(),
+    FavoritesScreen(),
+    ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_currentIndex],
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
@@ -38,17 +42,4 @@ class _AppRouterState extends State<AppRouter> {
       ),
     );
   }
-}
-
-class PlaceholderPage extends StatelessWidget {
-  final String label;
-  const PlaceholderPage({super.key, required this.label});
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Text(
-      '$label — Coming in Sprint 2+',
-      style: Theme.of(context).textTheme.headlineMedium,
-    ),
-  );
 }

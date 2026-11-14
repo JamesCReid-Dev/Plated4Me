@@ -29,4 +29,10 @@ abstract class RestaurantRepository {
 
   /// Checks whether a restaurant with the given [name] already exists.
   Future<bool> existsByName(String name);
+
+  /// Looks up a restaurant by the exact (name, address) tuple.
+  ///
+  /// Returns `null` if no restaurant matches both name and address exactly.
+  /// This supports deduplication lookups per AD-10.
+  Future<Restaurant?> getByNamedAddress(String name, String? address);
 }
