@@ -152,7 +152,10 @@ class Visit {
       )
       ..id = id ?? this.id
       ..createdAt = createdAt ?? this.createdAt
-      ..updatedAt = updatedAt ?? this.updatedAt;
+      ..updatedAt = updatedAt ?? this.updatedAt
+      ..generalNotes = generalNotes ?? this.generalNotes
+      ..blacklisted = blacklisted ?? this.blacklisted
+      ..blacklistReason = blacklistReason ?? this.blacklistReason;
   }
 
   @override

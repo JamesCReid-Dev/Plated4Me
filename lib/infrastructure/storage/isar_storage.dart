@@ -61,7 +61,7 @@ class IsarRestaurantRepository implements RestaurantRepository {
   final Isar? _isar;
 
   /// Creates a repository using the global [isar] instance from main.dart.
-  IsarRestaurantRepository({Isar? isar}) : _isar = isar;
+  IsarRestaurantRepository({this._isar});
 
   Isar get _db => _isar ?? isar;
 
@@ -131,7 +131,7 @@ class IsarVisitRepository implements VisitRepository {
   final Isar? _isar;
 
   /// Creates a repository using the global [isar] instance from main.dart.
-  IsarVisitRepository({Isar? isar}) : _isar = isar;
+  IsarVisitRepository({this._isar});
 
   Isar get _db => _isar ?? isar;
 
@@ -242,6 +242,29 @@ class IsarVisitRepository implements VisitRepository {
 
     return results;
   }
+
+  @override
+  Future<int> bulkDeleteBlacklistedVisits() async {
+    return _retryWithBackoff(() async {
+      final allVisits = await getAllVisits();
+      final blacklistedIds = <Id>[];
+      for (final visit in allVisits) {
+        if (visit.blacklisted) {
+          blacklistedIds.add(visit.id);
+        }
+      }
+
+      if (blacklistedIds.isEmpty) return 0;
+
+      await _db.writeTxn(() async {
+        for (final id in blacklistedIds) {
+          await _db.visits.delete(id);
+        }
+      });
+
+      return blacklistedIds.length;
+    });
+  }
 }
 
 // -- UserPreferences Repository ----------------------------------------------
@@ -251,7 +274,7 @@ class IsarUserPreferencesRepository implements UserPreferencesRepository {
   final Isar? _isar;
 
   /// Creates a repository using the global [isar] instance from main.dart.
-  IsarUserPreferencesRepository({Isar? isar}) : _isar = isar;
+  IsarUserPreferencesRepository({this._isar});
 
   Isar get _db => _isar ?? isar;
 
@@ -291,7 +314,7 @@ class IsarAllergenRepository implements AllergenRepository {
   final Isar? _isar;
 
   /// Creates a repository using the global [isar] instance from main.dart.
-  IsarAllergenRepository({Isar? isar}) : _isar = isar;
+  IsarAllergenRepository({this._isar});
 
   Isar get _db => _isar ?? isar;
 

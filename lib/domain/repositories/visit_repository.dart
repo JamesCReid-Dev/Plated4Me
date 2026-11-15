@@ -38,4 +38,10 @@ abstract class VisitRepository {
   /// Returns visits matching the query text, ordered by relevance.
   /// Empty queries return an empty list (AC-2).
   Future<List<Visit>> searchVisits(String query);
+
+  /// Bulk deletes all blacklisted visits.
+  ///
+  /// Used by the Settings screen's "Clear all blacklisted visits" action (AC-6).
+  /// Returns the number of visits deleted.
+  Future<int> bulkDeleteBlacklistedVisits();
 }
