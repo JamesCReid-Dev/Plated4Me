@@ -40,7 +40,7 @@ linter:
 
     # Intentionally Disabled
     # sort_constructors_first: false — Constructor order flexibility
-    # use_build_context_synchronously: false — Allowed with caution in widgets
+    use_build_context_synchronously: false
     # public_member_api_docs: false — Documentation effort deferred
     dangling_library_doc_comments: false
 

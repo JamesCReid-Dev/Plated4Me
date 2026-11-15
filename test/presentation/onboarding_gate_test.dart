@@ -18,9 +18,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Onboarding'),
+        find.text('Do you have any food allergies?'),
         findsWidgets,
-        reason: 'AC-4: Onboarding screen shown when not complete',
+        reason: 'AC-4: Allergies screen title visible when onboarding incomplete',
       );
 
       expect(
@@ -49,9 +49,9 @@ void main() {
       // Note: IndexedStack keeps all children visible, but with onboardingComplete=true,
       // only the shell is rendered — no onboarding screen at all.
       expect(
-        find.text('Onboarding'),
+        find.text('Do you have any food allergies?'),
         findsNothing,
-        reason: 'AC-4: Onboarding screen not shown when already complete',
+        reason: 'AC-4: Allergies title absent when onboarding complete',
       );
     });
 
@@ -66,7 +66,7 @@ void main() {
 
       // Check that the onboarding screen is visible (proving we're on /onboarding route)
       expect(
-        find.text('Onboarding'),
+        find.text('Do you have any food allergies?'),
         findsWidgets,
         reason: 'AC-4: onboarding uses /onboarding route path',
       );
@@ -89,7 +89,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Onboarding'), findsWidgets);
+      expect(find.text('Do you have any food allergies?'), findsWidgets);
 
       // Complete onboarding via the notifier
       await container.read(userPreferencesDataProvider.notifier).completeOnboarding();

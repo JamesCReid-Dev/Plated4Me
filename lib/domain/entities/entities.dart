@@ -178,18 +178,32 @@ class UserPreferences {
   List<Allergen> allergies = [];
 
   // -- Cuisine preferences (FR-14, FR-16) -----------------------------------
-  final cuisinePreferences = <String>[];
+  List<String> cuisinePreferences = [];
 
   // -- Rating scale (FR-14, FR-16) ------------------------------------------
   int ratingScale = 5;
 
   // -- Default occasions (FR-14) --------------------------------------------
-  final defaultOccasions = <String>[];
+  List<String> defaultOccasions = [];
 
   // -- Onboarding state (AD-6) ----------------------------------------------
   bool onboardingComplete = false;
 
-  UserPreferences();
+  /// Creates user preferences with optional initial values.
+  ///
+  /// Defaults: ratingScale = 5, onboardingComplete = false,
+  /// allergies/cuisinePreferences/defaultOccasions = empty lists.
+  UserPreferences({
+    List<Allergen>? allergies,
+    List<String> cuisinePreferences = const [],
+    this.ratingScale = 5,
+    List<String> defaultOccasions = const [],
+    this.onboardingComplete = false,
+  }) {
+    this.cuisinePreferences.addAll(cuisinePreferences);
+    this.defaultOccasions.addAll(defaultOccasions);
+    if (allergies != null) this.allergies.addAll(allergies);
+  }
 
   void touch() => updatedAt = DateTime.now();
 
@@ -325,6 +339,26 @@ class PhotoAttachment {
 
 // -- Supporting types --------------------------------------------------------
 
+/// Severity level for food allergies.
+enum AllergenSeverity {
+  /// Moderate reaction — avoid but manageable.
+  moderate(0, 'Moderate'),
+
+  /// Severe reaction — strict avoidance required.
+  severe(1, 'Severe');
+
+  /// The integer value stored in Isar (0 = moderate, 1 = severe).
+  final int value;
+
+  /// Human-readable display label.
+  final String label;
+
+  const AllergenSeverity(this.value, this.label);
+}
+
+/// Default severity for new allergens (Moderate).
+const int kDefaultAllergenSeverity = 0;
+
 @collection
 class Allergen {
   Id id = Isar.autoIncrement;
@@ -333,20 +367,27 @@ class Allergen {
   @Index(type: IndexType.value)
   String name = '';
 
-  /// Severity level: 0 = moderate, 1 = severe (stored as int for Isar compatibility).
-  int severity = 0;
+  /// Severity level: defaults to moderate (0).
+  int severity = kDefaultAllergenSeverity;
 
   /// When this allergen entry was created.
   @Index(type: IndexType.value)
   DateTime createdAt = DateTime.now();
 
-  Allergen({required this.name, required this.severity});
+  Allergen({required this.name, this.severity = kDefaultAllergenSeverity});
 
   Allergen copyWith({Id? id, String? name, int? severity}) {
     return Allergen(
       name: name ?? this.name,
       severity: severity ?? this.severity,
     )..id = id ?? this.id;
+  }
+
+  /// Returns the human-readable severity label.
+  String get severityLabel {
+    if (severity == AllergenSeverity.moderate.value) return 'Moderate';
+    if (severity == AllergenSeverity.severe.value) return 'Severe';
+    return 'Unknown';
   }
 
   @override
