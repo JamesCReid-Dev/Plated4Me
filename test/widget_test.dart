@@ -35,7 +35,7 @@ void main() {
     expect(bottomNav.items[1].label, 'Favorites');
     expect(bottomNav.items[2].label, 'Settings');
 
-    // The initial page is the Browse screen.
+    // The initial page is the Browse screen (P4ME-25: 3 tabs = Browse, Favorites, Settings).
     expect(find.text('Browse Restaurants'), findsOneWidget);
   });
 }

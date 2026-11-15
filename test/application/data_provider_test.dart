@@ -152,7 +152,9 @@ class MockUserPreferencesRepository implements UserPreferencesRepository {
   @override
   Future<UserPreferences> getUserPreferences() async {
     if (throwOnGet) throw Exception('Get failed');
-    stored ??= UserPreferences();
+    if (stored == null) {
+      stored = UserPreferences();
+    }
     return stored!;
   }
 

@@ -3762,14 +3762,11 @@ UserPreferences _userPreferencesDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = UserPreferences(
-    cuisinePreferences: reader.readStringList(offsets[1]) ?? const [],
-    defaultOccasions: reader.readStringList(offsets[2]) ?? const [],
-    onboardingComplete: reader.readBoolOrNull(offsets[3]) ?? false,
-    ratingScale: reader.readLongOrNull(offsets[4]) ?? 5,
-  );
+  final object = UserPreferences();
   object.createdAt = reader.readDateTime(offsets[0]);
   object.id = id;
+  object.onboardingComplete = reader.readBool(offsets[3]);
+  object.ratingScale = reader.readLong(offsets[4]);
   object.updatedAt = reader.readDateTime(offsets[5]);
   return object;
 }
@@ -3784,13 +3781,13 @@ P _userPreferencesDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readStringList(offset) ?? const []) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 2:
-      return (reader.readStringList(offset) ?? const []) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 3:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readLongOrNull(offset) ?? 5) as P;
+      return (reader.readLong(offset)) as P;
     case 5:
       return (reader.readDateTime(offset)) as P;
     default:
@@ -8107,11 +8104,6 @@ const AllergenSchema = CollectionSchema(
       id: 2,
       name: r'severity',
       type: IsarType.long,
-    ),
-    r'severityLabel': PropertySchema(
-      id: 3,
-      name: r'severityLabel',
-      type: IsarType.string,
     )
   },
   estimateSize: _allergenEstimateSize,
@@ -8162,7 +8154,6 @@ int _allergenEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.name.length * 3;
-  bytesCount += 3 + object.severityLabel.length * 3;
   return bytesCount;
 }
 
@@ -8175,7 +8166,6 @@ void _allergenSerialize(
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeString(offsets[1], object.name);
   writer.writeLong(offsets[2], object.severity);
-  writer.writeString(offsets[3], object.severityLabel);
 }
 
 Allergen _allergenDeserialize(
@@ -8186,7 +8176,7 @@ Allergen _allergenDeserialize(
 ) {
   final object = Allergen(
     name: reader.readString(offsets[1]),
-    severity: reader.readLongOrNull(offsets[2]) ?? kDefaultAllergenSeverity,
+    severity: reader.readLong(offsets[2]),
   );
   object.createdAt = reader.readDateTime(offsets[0]);
   object.id = id;
@@ -8205,9 +8195,7 @@ P _allergenDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readLongOrNull(offset) ?? kDefaultAllergenSeverity) as P;
-    case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -8830,140 +8818,6 @@ extension AllergenQueryFilter
       ));
     });
   }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'severityLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition>
-      severityLabelGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'severityLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'severityLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'severityLabel',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition>
-      severityLabelStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'severityLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'severityLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelContains(
-      String value,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'severityLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'severityLabel',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition>
-      severityLabelIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'severityLabel',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterFilterCondition>
-      severityLabelIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'severityLabel',
-        value: '',
-      ));
-    });
-  }
 }
 
 extension AllergenQueryObject
@@ -9006,18 +8860,6 @@ extension AllergenQuerySortBy on QueryBuilder<Allergen, Allergen, QSortBy> {
   QueryBuilder<Allergen, Allergen, QAfterSortBy> sortBySeverityDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'severity', Sort.desc);
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterSortBy> sortBySeverityLabel() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'severityLabel', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterSortBy> sortBySeverityLabelDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'severityLabel', Sort.desc);
     });
   }
 }
@@ -9071,18 +8913,6 @@ extension AllergenQuerySortThenBy
       return query.addSortBy(r'severity', Sort.desc);
     });
   }
-
-  QueryBuilder<Allergen, Allergen, QAfterSortBy> thenBySeverityLabel() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'severityLabel', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QAfterSortBy> thenBySeverityLabelDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'severityLabel', Sort.desc);
-    });
-  }
 }
 
 extension AllergenQueryWhereDistinct
@@ -9103,14 +8933,6 @@ extension AllergenQueryWhereDistinct
   QueryBuilder<Allergen, Allergen, QDistinct> distinctBySeverity() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'severity');
-    });
-  }
-
-  QueryBuilder<Allergen, Allergen, QDistinct> distinctBySeverityLabel(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'severityLabel',
-          caseSensitive: caseSensitive);
     });
   }
 }
@@ -9138,12 +8960,6 @@ extension AllergenQueryProperty
   QueryBuilder<Allergen, int, QQueryOperations> severityProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'severity');
-    });
-  }
-
-  QueryBuilder<Allergen, String, QQueryOperations> severityLabelProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'severityLabel');
     });
   }
 }

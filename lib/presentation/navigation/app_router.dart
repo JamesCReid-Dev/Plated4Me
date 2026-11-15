@@ -57,28 +57,8 @@ class _OnboardingGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Onboarding content fills the screen.
-          const OnboardingScreen(),
-          // Completion button at bottom.
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 24,
-            child: Center(
-              child: FilledButton.icon(
-                onPressed: () {
-                  ref.read(userPreferencesDataProvider.notifier).completeOnboarding();
-                },
-                icon: const Icon(Icons.check),
-                label: const Text('Complete Setup'),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return const Scaffold(
+      body: OnboardingScreen(),
     );
   }
 }
