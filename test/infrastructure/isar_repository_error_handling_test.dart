@@ -3,7 +3,6 @@
 /// Covers AC-5 of P4ME-24:
 ///   Error handling: 2 retries (~500ms each) for transient failures;
 ///   recoverable → snack bar, unrecoverable → dialog (AD-8).
-import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plated4me/domain/entities/entities.dart';

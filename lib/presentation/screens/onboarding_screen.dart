@@ -3,6 +3,7 @@
 /// Four-screen flow: Allergies → Cuisine Preferences → Rating Scale → Default Occasions.
 /// Every screen has a "Skip for now" button that applies sensible defaults (AC-6).
 /// Completing writes [UserPreferences] to Isar and navigates to Browse/Home (AC-5).
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plated4me/application/onboarding_state.dart';

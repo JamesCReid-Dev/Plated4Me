@@ -368,6 +368,20 @@ After all TDD phases (Red → Green → Refactor) are complete and tests are pos
 
 **GATE CHECK:** Confirm PR is created and linked before considering the story complete.
 
+### Gate 5.5: Rebase onto Latest Main (Pre-Merge)
+
+Before merging the PR, you MUST ensure your branch is up-to-date with main to avoid merge conflicts:
+
+1. **Fetch latest main:** `git fetch origin main`
+2. **Rebase onto main:** `git rebase origin/main`
+3. **Resolve any conflicts immediately** — do NOT defer conflict resolution to the PR merge step. Edit conflicted files, `git add` resolved files, then `git rebase --continue`.
+4. **Force-push the rebased branch:** `git push --force-with-lease origin <branch-name>`
+5. **Verify the PR is clean** — no merge conflicts should remain when viewing the PR on GitHub.
+
+> **Why this matters:** While you work on a feature branch, other PRs may be merged to main. Rebasing before merge ensures your changes sit cleanly on top of the latest code, making the squash-merge conflict-free. Pulling latest *before* branch creation is not sufficient — main continues advancing during development.
+
+**GATE CHECK:** Confirm branch is rebased onto latest main with no conflicts before proceeding to Gate 6. **DO NOT proceed until this is complete.**
+
 ---
 
 ## Sprint Management — Critical Procedures
@@ -667,7 +681,14 @@ This process defines the step-by-step workflow to follow when a story or task ha
     git push origin <branch-name>
     ```
 
-21. **Create a Pull Request (PR)** from the feature branch to the target branch (typically `main` or `develop`):
+21. **Rebase onto latest main (Gate 5.5):** Before creating the PR, ensure your branch is up-to-date:
+    ```bash
+    git fetch origin main
+    git rebase origin/main   # resolve conflicts if any, then: git add + git rebase --continue
+    git push --force-with-lease origin <branch-name>
+    ```
+
+22. **Create a Pull Request (PR)** from the feature branch to the target branch (typically `main` or `develop`):
     - Link the PR to the Jira artifact in the PR description
     - Include a summary of TDD phases completed, test results, and any notes for reviewers
     - Reference impacted Confluence pages or Figma designs where applicable
@@ -817,7 +838,9 @@ After the PR is created and merged (or if deploying directly from the feature br
 | 17 | Only after tests posted: Transition Jira status to In Review | ☐ | Gate 5 |
 | 18 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
 | 19 | Push changes to remote origin | ☐ | Gate 5 |
-| 20 | Create Pull Request referencing TDD phases and Jira test results | ☐ | Gate 5 |
+| 20 | Rebase onto latest main (`git fetch origin main && git rebase origin/main`) | ☐ | Gate 5.5 |
+| 21 | Force-push rebased branch (`git push --force-with-lease`) | ☐ | Gate 5.5 |
+| 22 | Create Pull Request referencing TDD phases and Jira test results | ☐ | Gate 5 |
 | **GATE 5 PASSED — Build & Deploy now permitted** | | | |
 | 15a | iOS: Boot iPhone simulator → `flutter pub get` → `flutter run -d "<iPhone>"` → verify launch → stop | ☐ | Phase 6 |
 | 15b | Android: Launch AVD emulator → `flutter pub get` → `flutter run -d <emulator>` → verify launch → stop | ☐ | Phase 6 |

@@ -6,10 +6,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plated4me/application/providers/data_providers.dart';
 import 'package:plated4me/domain/entities/entities.dart';
 import 'package:plated4me/presentation/screens/onboarding_screen.dart';
-import 'helpers.dart';
 
 /// Builds a test widget tree with Riverpod scope and MaterialApp.
 Widget _testWrapper(Widget child, {ProviderContainer? container}) {

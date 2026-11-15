@@ -135,7 +135,7 @@ void main() {
     });
 
     test('preset cuisines include all 20 required options', () {
-      final presets = OnboardingState.presetCuisines;
+      const presets = OnboardingState.presetCuisines;
 
       expect(presets, contains('Japanese'));
       expect(presets, contains('Mexican'));
@@ -182,7 +182,7 @@ void main() {
     });
 
     test('valid rating scales are 5 and 10 only', () {
-      final validScales = OnboardingState.validRatingScales;
+      const validScales = OnboardingState.validRatingScales;
 
       expect(validScales, contains(5));
       expect(validScales, contains(10));
@@ -216,7 +216,7 @@ void main() {
     });
 
     test('pre-populated occasions match the story requirements', () {
-      final defaults = OnboardingState.defaultOccasions;
+      const defaults = OnboardingState.defaultOccasions;
 
       expect(defaults, contains('Date Night'));
       expect(defaults, contains('Family Dinner'));

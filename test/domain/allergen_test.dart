@@ -54,7 +54,7 @@ void main() {
     });
 
     test('all valid severity values are defined', () {
-      final values = AllergenSeverity.values;
+      const values = AllergenSeverity.values;
 
       expect(values, hasLength(2));
       expect(values, contains(AllergenSeverity.moderate));
