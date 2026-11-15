@@ -38,7 +38,7 @@ void main() {
     test('getByNamedAddress finds restaurant by exact name and address', () async {
       final available = await _tryOpenIsar([RestaurantSchema]);
       if (!available) {
-        print('SKIPPED: Isar native library not available — run on a device/simulator');
+        // SKIPPED: Isar native library not available — run on a device/simulator
         return;
       }
       final isar = await Isar.open([RestaurantSchema], directory: ':memory:');
