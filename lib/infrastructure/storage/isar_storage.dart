@@ -36,13 +36,17 @@ Future<T> _retryWithBackoff<T>(Future<T> Function() fn) async {
       if (!e.isRecoverable) rethrow; // Unrecoverable — no retry
       lastError = e;
       if (attempt < _kMaxRetries) {
-        await Future<void>.delayed(const Duration(milliseconds: _kRetryDelayMs));
+        await Future<void>.delayed(
+          const Duration(milliseconds: _kRetryDelayMs),
+        );
       }
     } catch (e) {
       // Treat unexpected errors as recoverable transient failures
       lastError = e;
       if (attempt < _kMaxRetries) {
-        await Future<void>.delayed(const Duration(milliseconds: _kRetryDelayMs));
+        await Future<void>.delayed(
+          const Duration(milliseconds: _kRetryDelayMs),
+        );
       }
     }
   }
@@ -110,10 +114,7 @@ class IsarRestaurantRepository implements RestaurantRepository {
 
   @override
   Future<Restaurant?> getByNamedAddress(String name, String? address) async {
-    final results = await _db.restaurants
-        .where()
-        .nameEqualTo(name)
-        .findAll();
+    final results = await _db.restaurants.where().nameEqualTo(name).findAll();
 
     for (final r in results) {
       if (r.address == address) {
@@ -206,10 +207,7 @@ class IsarVisitRepository implements VisitRepository {
   @override
   Stream<List<Visit>> visitStream() {
     // Watch the visits collection for real-time updates.
-    return _db.visits
-        .where()
-        .sortByCreatedAtDesc()
-        .watch();
+    return _db.visits.where().sortByCreatedAtDesc().watch();
   }
 
   @override
@@ -325,6 +323,56 @@ class IsarAllergenRepository implements AllergenRepository {
     final existing = await _db.allergens.get(id);
     if (existing == null) return false;
     await _db.writeTxn(() => _db.allergens.delete(id));
+    return true;
+  }
+}
+
+// -- AllergySafeFood Repository ----------------------------------------------
+
+/// Isar implementation of [AllergySafeFoodRepository].
+class IsarAllergySafeFoodRepository implements AllergySafeFoodRepository {
+  final Isar? _isar;
+
+  /// Creates a repository using the global [isar] instance from main.dart.
+  IsarAllergySafeFoodRepository({Isar? isar}) : _isar = isar;
+
+  Isar get _db => _isar ?? isar;
+
+  @override
+  Future<List<AllergySafeFood>> getAllSafeFoods() async {
+    return _db.allergySafeFoods.where().findAll();
+  }
+
+  @override
+  Future<List<AllergySafeFood>> getAllSafeFoodsForRestaurant(
+    int restaurantId,
+  ) async {
+    return _db.allergySafeFoods
+        .where()
+        .filter()
+        .restaurantIdEqualTo(restaurantId)
+        .findAll();
+  }
+
+  @override
+  Future<AllergySafeFood?> getSafeFoodById(Id id) async {
+    return _db.allergySafeFoods.get(id);
+  }
+
+  @override
+  Future<AllergySafeFood> saveSafeFood(AllergySafeFood food) async {
+    await _db.writeTxn(() {
+      food.id = Isar.autoIncrement;
+      return _db.allergySafeFoods.put(food);
+    });
+    return food;
+  }
+
+  @override
+  Future<bool> deleteSafeFood(Id id) async {
+    final existing = await _db.allergySafeFoods.get(id);
+    if (existing == null) return false;
+    await _db.writeTxn(() => _db.allergySafeFoods.delete(id));
     return true;
   }
 }

@@ -3762,11 +3762,14 @@ UserPreferences _userPreferencesDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = UserPreferences();
+  final object = UserPreferences(
+    cuisinePreferences: reader.readStringList(offsets[1]) ?? const [],
+    defaultOccasions: reader.readStringList(offsets[2]) ?? const [],
+    onboardingComplete: reader.readBoolOrNull(offsets[3]) ?? false,
+    ratingScale: reader.readLongOrNull(offsets[4]) ?? 5,
+  );
   object.createdAt = reader.readDateTime(offsets[0]);
   object.id = id;
-  object.onboardingComplete = reader.readBool(offsets[3]);
-  object.ratingScale = reader.readLong(offsets[4]);
   object.updatedAt = reader.readDateTime(offsets[5]);
   return object;
 }
@@ -3781,13 +3784,13 @@ P _userPreferencesDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 2:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readStringList(offset) ?? const []) as P;
     case 3:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 5) as P;
     case 5:
       return (reader.readDateTime(offset)) as P;
     default:
@@ -4931,6 +4934,11 @@ const AllergySafeFoodSchema = CollectionSchema(
       id: 1,
       name: r'itemName',
       type: IsarType.string,
+    ),
+    r'restaurantId': PropertySchema(
+      id: 2,
+      name: r'restaurantId',
+      type: IsarType.long,
     )
   },
   estimateSize: _allergySafeFoodEstimateSize,
@@ -4939,6 +4947,19 @@ const AllergySafeFoodSchema = CollectionSchema(
   deserializeProp: _allergySafeFoodDeserializeProp,
   idName: r'id',
   indexes: {
+    r'restaurantId': IndexSchema(
+      id: -5575443496065107470,
+      name: r'restaurantId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'restaurantId',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
     r'createdAt': IndexSchema(
       id: -3433535483987302584,
       name: r'createdAt',
@@ -4979,6 +5000,7 @@ void _allergySafeFoodSerialize(
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeString(offsets[1], object.itemName);
+  writer.writeLong(offsets[2], object.restaurantId);
 }
 
 AllergySafeFood _allergySafeFoodDeserialize(
@@ -4989,6 +5011,7 @@ AllergySafeFood _allergySafeFoodDeserialize(
 ) {
   final object = AllergySafeFood(
     itemName: reader.readString(offsets[1]),
+    restaurantId: reader.readLongOrNull(offsets[2]) ?? 0,
   );
   object.createdAt = reader.readDateTime(offsets[0]);
   object.id = id;
@@ -5006,6 +5029,8 @@ P _allergySafeFoodDeserializeProp<P>(
       return (reader.readDateTime(offset)) as P;
     case 1:
       return (reader.readString(offset)) as P;
+    case 2:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -5029,6 +5054,15 @@ extension AllergySafeFoodQueryWhereSort
   QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterWhere>
+      anyRestaurantId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'restaurantId'),
+      );
     });
   }
 
@@ -5106,6 +5140,99 @@ extension AllergySafeFoodQueryWhere
         lower: lowerId,
         includeLower: includeLower,
         upper: upperId,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterWhereClause>
+      restaurantIdEqualTo(int restaurantId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'restaurantId',
+        value: [restaurantId],
+      ));
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterWhereClause>
+      restaurantIdNotEqualTo(int restaurantId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'restaurantId',
+              lower: [],
+              upper: [restaurantId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'restaurantId',
+              lower: [restaurantId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'restaurantId',
+              lower: [restaurantId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'restaurantId',
+              lower: [],
+              upper: [restaurantId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterWhereClause>
+      restaurantIdGreaterThan(
+    int restaurantId, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'restaurantId',
+        lower: [restaurantId],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterWhereClause>
+      restaurantIdLessThan(
+    int restaurantId, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'restaurantId',
+        lower: [],
+        upper: [restaurantId],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterWhereClause>
+      restaurantIdBetween(
+    int lowerRestaurantId,
+    int upperRestaurantId, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'restaurantId',
+        lower: [lowerRestaurantId],
+        includeLower: includeLower,
+        upper: [upperRestaurantId],
         includeUpper: includeUpper,
       ));
     });
@@ -5454,6 +5581,62 @@ extension AllergySafeFoodQueryFilter
       ));
     });
   }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterFilterCondition>
+      restaurantIdEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'restaurantId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterFilterCondition>
+      restaurantIdGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'restaurantId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterFilterCondition>
+      restaurantIdLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'restaurantId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterFilterCondition>
+      restaurantIdBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'restaurantId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension AllergySafeFoodQueryObject
@@ -5489,6 +5672,20 @@ extension AllergySafeFoodQuerySortBy
       sortByItemNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'itemName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterSortBy>
+      sortByRestaurantId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'restaurantId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterSortBy>
+      sortByRestaurantIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'restaurantId', Sort.desc);
     });
   }
 }
@@ -5534,6 +5731,20 @@ extension AllergySafeFoodQuerySortThenBy
       return query.addSortBy(r'itemName', Sort.desc);
     });
   }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterSortBy>
+      thenByRestaurantId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'restaurantId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QAfterSortBy>
+      thenByRestaurantIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'restaurantId', Sort.desc);
+    });
+  }
 }
 
 extension AllergySafeFoodQueryWhereDistinct
@@ -5549,6 +5760,13 @@ extension AllergySafeFoodQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'itemName', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, AllergySafeFood, QDistinct>
+      distinctByRestaurantId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'restaurantId');
     });
   }
 }
@@ -5571,6 +5789,12 @@ extension AllergySafeFoodQueryProperty
   QueryBuilder<AllergySafeFood, String, QQueryOperations> itemNameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'itemName');
+    });
+  }
+
+  QueryBuilder<AllergySafeFood, int, QQueryOperations> restaurantIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'restaurantId');
     });
   }
 }
@@ -8104,6 +8328,11 @@ const AllergenSchema = CollectionSchema(
       id: 2,
       name: r'severity',
       type: IsarType.long,
+    ),
+    r'severityLabel': PropertySchema(
+      id: 3,
+      name: r'severityLabel',
+      type: IsarType.string,
     )
   },
   estimateSize: _allergenEstimateSize,
@@ -8154,6 +8383,7 @@ int _allergenEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.name.length * 3;
+  bytesCount += 3 + object.severityLabel.length * 3;
   return bytesCount;
 }
 
@@ -8166,6 +8396,7 @@ void _allergenSerialize(
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeString(offsets[1], object.name);
   writer.writeLong(offsets[2], object.severity);
+  writer.writeString(offsets[3], object.severityLabel);
 }
 
 Allergen _allergenDeserialize(
@@ -8176,7 +8407,7 @@ Allergen _allergenDeserialize(
 ) {
   final object = Allergen(
     name: reader.readString(offsets[1]),
-    severity: reader.readLong(offsets[2]),
+    severity: reader.readLongOrNull(offsets[2]) ?? kDefaultAllergenSeverity,
   );
   object.createdAt = reader.readDateTime(offsets[0]);
   object.id = id;
@@ -8195,7 +8426,9 @@ P _allergenDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? kDefaultAllergenSeverity) as P;
+    case 3:
+      return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -8818,6 +9051,140 @@ extension AllergenQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'severityLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition>
+      severityLabelGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'severityLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'severityLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'severityLabel',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition>
+      severityLabelStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'severityLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'severityLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'severityLabel',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition> severityLabelMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'severityLabel',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition>
+      severityLabelIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'severityLabel',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterFilterCondition>
+      severityLabelIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'severityLabel',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension AllergenQueryObject
@@ -8860,6 +9227,18 @@ extension AllergenQuerySortBy on QueryBuilder<Allergen, Allergen, QSortBy> {
   QueryBuilder<Allergen, Allergen, QAfterSortBy> sortBySeverityDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'severity', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterSortBy> sortBySeverityLabel() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'severityLabel', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterSortBy> sortBySeverityLabelDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'severityLabel', Sort.desc);
     });
   }
 }
@@ -8913,6 +9292,18 @@ extension AllergenQuerySortThenBy
       return query.addSortBy(r'severity', Sort.desc);
     });
   }
+
+  QueryBuilder<Allergen, Allergen, QAfterSortBy> thenBySeverityLabel() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'severityLabel', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QAfterSortBy> thenBySeverityLabelDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'severityLabel', Sort.desc);
+    });
+  }
 }
 
 extension AllergenQueryWhereDistinct
@@ -8933,6 +9324,14 @@ extension AllergenQueryWhereDistinct
   QueryBuilder<Allergen, Allergen, QDistinct> distinctBySeverity() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'severity');
+    });
+  }
+
+  QueryBuilder<Allergen, Allergen, QDistinct> distinctBySeverityLabel(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'severityLabel',
+          caseSensitive: caseSensitive);
     });
   }
 }
@@ -8960,6 +9359,12 @@ extension AllergenQueryProperty
   QueryBuilder<Allergen, int, QQueryOperations> severityProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'severity');
+    });
+  }
+
+  QueryBuilder<Allergen, String, QQueryOperations> severityLabelProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'severityLabel');
     });
   }
 }
