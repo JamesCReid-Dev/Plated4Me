@@ -143,6 +143,14 @@ class MockVisitRepository implements VisitRepository {
       return false;
     }).toList();
   }
+
+  @override
+  Future<int> bulkDeleteBlacklistedVisits() async {
+    final blacklistedIds = data.where((v) => v.blacklisted).map((v) => v.id).toList();
+    if (blacklistedIds.isEmpty) return 0;
+    data.removeWhere((v) => blacklistedIds.contains(v.id));
+    return blacklistedIds.length;
+  }
 }
 
 class MockUserPreferencesRepository implements UserPreferencesRepository {
