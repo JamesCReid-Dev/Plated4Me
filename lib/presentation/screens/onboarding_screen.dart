@@ -30,16 +30,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _skip() {
-    state.skipScreen(state.currentScreen);
-    if (state.currentScreen < OnboardingState.totalScreens - 1) {
-      state.nextScreen();
-    }
+    setState(() {
+      state.skipScreen(state.currentScreen);
+      if (state.currentScreen < OnboardingState.totalScreens - 1) {
+        state.nextScreen();
+      }
+    });
   }
 
   void _next() {
-    if (state.currentScreen < OnboardingState.totalScreens - 1) {
-      state.nextScreen();
-    }
+    setState(() {
+      if (state.currentScreen < OnboardingState.totalScreens - 1) {
+        state.nextScreen();
+      }
+    });
   }
 
   void _previous() {
@@ -62,9 +66,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               value: (state.currentScreen + 1) / OnboardingState.totalScreens,
               minHeight: 4,
             ),
-            Expanded(
-              child: _buildCurrentScreen(),
-            ),
+            Expanded(child: _buildCurrentScreen()),
             // Navigation buttons at bottom
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -84,13 +86,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           child: const Text('Back'),
                         ),
                       ElevatedButton(
-                        onPressed: state.currentScreen == OnboardingState.totalScreens - 1
+                        onPressed:
+                            state.currentScreen ==
+                                OnboardingState.totalScreens - 1
                             ? () async {
                                 await _complete();
                                 if (mounted) {
                                   // Navigate to home/browse by completing onboarding
                                   await ref
-                                      .read(userPreferencesDataProvider.notifier)
+                                      .read(
+                                        userPreferencesDataProvider.notifier,
+                                      )
                                       .completeOnboarding();
                                   // Pop the onboarding route to reach navigation shell
                                   Navigator.of(context).pop();
@@ -98,7 +104,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               }
                             : _next,
                         child: Text(
-                          state.currentScreen == OnboardingState.totalScreens - 1
+                          state.currentScreen ==
+                                  OnboardingState.totalScreens - 1
                               ? 'Done'
                               : 'Next',
                         ),
@@ -177,7 +184,10 @@ class _AllergiesScreenState extends State<_AllergiesScreen> {
           const SizedBox(height: 16),
 
           // Severity selection
-          const Text('Severity:', style: TextStyle(fontWeight: FontWeight.w500)),
+          const Text(
+            'Severity:',
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -230,11 +240,14 @@ class _AllergiesScreenState extends State<_AllergiesScreen> {
                 deleteIcon: const Icon(Icons.close, size: 18),
                 onDeleted: () => _removeAllergen(allergen.name),
                 avatar: CircleAvatar(
-                  backgroundColor: allergen.severity == AllergenSeverity.severe.value
+                  backgroundColor:
+                      allergen.severity == AllergenSeverity.severe.value
                       ? Colors.red.shade100
                       : Colors.orange.shade100,
                   child: Text(
-                    allergen.severity == AllergenSeverity.severe.value ? 'S' : 'M',
+                    allergen.severity == AllergenSeverity.severe.value
+                        ? 'S'
+                        : 'M',
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
@@ -308,7 +321,9 @@ class _CuisineScreenState extends State<_CuisineScreen> {
             spacing: 8,
             runSpacing: 8,
             children: OnboardingState.presetCuisines.map((cuisine) {
-              final isSelected = widget.state.cuisinePreferences.contains(cuisine);
+              final isSelected = widget.state.cuisinePreferences.contains(
+                cuisine,
+              );
               return FilterChip(
                 label: Text(cuisine),
                 selected: isSelected,
@@ -497,14 +512,19 @@ class _RatingScaleCard extends StatelessWidget {
                       title,
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
                         color: isSelected
                             ? Theme.of(context).primaryColor
                             : null,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(description, style: const TextStyle(color: Colors.grey)),
+                    Text(
+                      description,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
@@ -611,7 +631,9 @@ class _OccasionsScreenState extends State<_OccasionsScreen> {
             spacing: 8,
             runSpacing: 8,
             children: OnboardingState.defaultOccasions.map((occasion) {
-              final isSelected = widget.state.selectedOccasions.contains(occasion);
+              final isSelected = widget.state.selectedOccasions.contains(
+                occasion,
+              );
               return FilterChip(
                 label: Text(occasion),
                 selected: isSelected,
