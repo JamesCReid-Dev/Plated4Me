@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plated4me/presentation/navigation/app_router.dart';
 import 'package:plated4me/presentation/screens/quick_log_screen.dart';
+
 import 'helpers.dart';
 
 void main() {
@@ -21,26 +22,35 @@ void main() {
         find.byType(BottomNavigationBar),
       );
       final labels = navBar.items.map((item) => item.label).toList();
-      expect(labels, isNot(contains('Quick Log')), reason: 'AC-3: Quick Log not a tab');
-    });
-
-    testWidgets('Quick Log entry point (FAB with tooltip "Quick Log") exists on Browse screen', (tester) async {
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: defaultPrefsContainer,
-          child: const MaterialApp(home: AppRouter()),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(
-        find.byTooltip('Quick Log'),
-        findsWidgets,
-        reason: 'AC-3: Quick Log entry point (FAB) present',
+        labels,
+        isNot(contains('Quick Log')),
+        reason: 'AC-3: Quick Log not a tab',
       );
     });
 
-    testWidgets('QuickLogScreen renders correctly when shown directly', (tester) async {
+    testWidgets(
+      'Quick Log entry point (FAB with tooltip "Quick Log") exists on Browse screen',
+      (tester) async {
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: defaultPrefsContainer,
+            child: const MaterialApp(home: AppRouter()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byTooltip('Quick Log'),
+          findsWidgets,
+          reason: 'AC-3: Quick Log entry point (FAB) present',
+        );
+      },
+    );
+
+    testWidgets('QuickLogScreen renders correctly when shown directly', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: defaultPrefsContainer,
@@ -78,27 +88,32 @@ void main() {
       expect(scaffold.drawer, isNull, reason: 'AC-3: Quick Log has no drawer');
     });
 
-    testWidgets('QuickLogScreen uses full-screen modal style (fullscreenDialog)', (tester) async {
-      // Verify that the route configuration for Quick Log sets fullscreenDialog = true.
-      // We can't directly test the Navigator.push call, but we verify the screen itself
-      // is designed as a full-screen modal by checking its Scaffold properties.
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: defaultPrefsContainer,
-          child: const MaterialApp(home: QuickLogScreen()),
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'QuickLogScreen uses full-screen modal style (fullscreenDialog)',
+      (tester) async {
+        // Verify that the route configuration for Quick Log sets fullscreenDialog = true.
+        // We can't directly test the Navigator.push call, but we verify the screen itself
+        // is designed as a full-screen modal by checking its Scaffold properties.
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: defaultPrefsContainer,
+            child: const MaterialApp(home: QuickLogScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // The screen should fill the full available space (no padding/margin that would suggest it's not modal)
-      expect(
-        find.byType(QuickLogScreen),
-        findsWidgets,
-        reason: 'AC-3: Quick Log renders as full-screen content',
-      );
-    });
+        // The screen should fill the full available space (no padding/margin that would suggest it's not modal)
+        expect(
+          find.byType(QuickLogScreen),
+          findsWidgets,
+          reason: 'AC-3: Quick Log renders as full-screen content',
+        );
+      },
+    );
 
-    testWidgets('back navigation from QuickLogScreen dismisses it', (tester) async {
+    testWidgets('back navigation from QuickLogScreen dismisses it', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: defaultPrefsContainer,

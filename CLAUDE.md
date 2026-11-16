@@ -299,14 +299,18 @@ Before making ANY code changes, you MUST:
 
 Before making ANY code changes, you MUST:
 1. Transition the Jira issue to `In Progress` using a proper workflow transition (not raw status).
+   ```bash
+   acli jira workitem transition --key <KEY> --status "In Progress"
+   ```
 2. Assign the Jira artifact to the correct person.
+   ```bash
+   acli jira workitem assign --key <KEY> --assignee "@me"
+   ```
 3. Verify the issue appears in the active column on the sprint board.
 
-**⚠️ If Jira operations fail with "Client must be authenticated":**
-- The API token in `.claude/.atlassian.env` has expired or been revoked
-- Regenerate at https://id.atlassian.com/manage-profile/security/api-tokens
-- Update `ATLASSIAN_API_TOKEN` in `.claude/.atlassian.env`
-- Test with: `bash .claude/scripts/jira.sh me`
+**⚠️ If Jira operations fail with "Not authenticated":**
+- Run `acli jira auth login` to re-authenticate via OAuth
+- Follow the browser-based authentication flow
 
 **GATE CHECK:** Confirm Jira is initialized and the issue is in `In Progress` before proceeding. **DO NOT proceed to Gate 2.5 until this is complete.**
 
@@ -407,20 +411,18 @@ acli jira sprint list-workitems --sprint <SPRINT_ID> --board 34
 After completing work in a sprint, always update Jira:
 ```bash
 # Transition completed stories to Done
-acli jira workitem transition <KEY> --transition "Done"
+acli jira workitem transition --key <KEY> --status "Done"
 
 # Add completion comments
-acli jira workitem comment <KEY> "Completed in Sprint N. See commit <hash>."
+acli jira workitem comment create --key <KEY> --body "Completed in Sprint N. See commit <hash>."
 ```
 
 ### Known Limitations — Story Association via CLI
 
-**The `acli` tool and REST API (with basic auth) cannot add issues to sprints.** This is a limitation of the available CLI tools:
+**The `acli` tool cannot add issues to sprints.** This is a limitation of the available CLI tools:
 
 - `acli jira sprint create/update/view/list-workitems` — works for managing sprint metadata
 - `acli jira workitem edit` — does NOT support setting the Sprint field or custom fields
-- REST API v2/v3 PATCH — returns 400 Bad Request for sprint field updates with basic auth
-- Agile API POST `/sprint/{id}/issues` — requires OAuth authentication (not available via curl)
 
 **Workaround: Associate stories manually in Jira UI:**
 1. Go to https://jamescreiddev-tbs.atlassian.net/browse/P4ME
@@ -438,10 +440,9 @@ acli jira workitem comment <KEY> "Completed in Sprint N. See commit <hash>."
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| "Client must be authenticated" | API token expired/revoked | Regenerate at id.atlassian.com, update `.claude/.atlassian.env` |
+| "Not authenticated" from acli | OAuth token expired or not configured | Run `acli jira auth login` to re-authenticate |
 | No stories in sprint | Stories not linked to Sprint field | Link manually in Jira UI (see Known Limitations above) |
-| Board shows wrong status | Status not transitioned after coding | Run `acli jira workitem transition <KEY> --transition "Done"` |
-| "Unknown command" from jira.sh | Script path issue | Use absolute: `bash .claude/scripts/jira.sh` |
+| Board shows wrong status | Status not transitioned after coding | Run `acli jira workitem transition --key <KEY> --status "Done"` |
 
 ### Fallback: GitHub Issues as Sprint Tracker
 
@@ -489,11 +490,23 @@ dart format .
 # Get dependencies
 flutter pub get
 
-# Jira — search stories for current sprint
-bash .claude/scripts/jira.sh search "sprint = <NAME> AND status != Closed"
+# Jira — search work items
+acli jira workitem search --jql "project = P4ME AND status != Closed" --paginate
+
+# Jira — view a work item
+acli jira workitem view P4ME-15
+
+# Jira — transition a work item
+acli jira workitem transition --key P4ME-15 --status "In Review"
+
+# Jira — comment on a work item
+acli jira workitem comment create --key P4ME-15 --body "Comment body here"
+
+# Jira — assign a work item
+acli jira workitem assign --key P4ME-15 --assignee "@me"
 
 # Jira — check auth
-bash .claude/scripts/jira.sh me
+acli jira auth status
 ```
 
 ---
@@ -666,15 +679,18 @@ This process defines the step-by-step workflow to follow when a story or task ha
 ### Phase 5: Code Review & Pull Request (Gate 4 → Gate 5)
 
 18. **Update the Jira artifact status to `In Review`** once implementation is complete and all acceptance criteria are met.
+    ```bash
+    acli jira workitem transition --key <KEY> --status "In Review"
+    ```
 
 19. **Stage and commit all changed files** with a commit message following this pattern:
     ```
     <jira-artifact-id>-<status>
     ```
-    - `<jira-artifact-id>` — The Jira issue key using prefix `IS-` (e.g., `IS-123`)
+    - `<jira-artifact-id>` — The Jira issue key (e.g., `P4ME-123`)
     - `<status>` — Current status of the change (e.g., `dev-complete`, `bugfix-resolved`, `docs-updated`)
 
-    **Example:** `IS-123-dev-complete` or `IS-99-bugfix-resolved`
+    **Example:** `P4ME-15-dev-complete` or `P4ME-99-bugfix-resolved`
 
 20. **Push all committed files to the remote origin repository:**
     ```bash
@@ -702,27 +718,27 @@ After the PR is created and merged (or if deploying directly from the feature br
 
 #### 5a. iOS — Build, Deploy & Run in Simulator
 
-1. **Identify an available iPhone simulator** (prefer the latest model):
+23. **Identify an available iPhone simulator** (prefer the latest model):
    ```bash
    xcrun simctl list devices available | grep -i iphone
    ```
 
-2. **Boot the selected iPhone simulator:**
+24. **Boot the selected iPhone simulator:**
    ```bash
    xcrun simctl boot "<iPhone Model>"
    ```
 
-3. **Ensure dependencies are up to date:**
+25. **Ensure dependencies are up to date:**
    ```bash
    flutter pub get
    ```
 
-4. **Build and deploy to the iOS simulator (debug mode):**
+26. **Build and deploy to the iOS simulator (debug mode):**
    ```bash
    flutter run -d "<iPhone Model>"
    ```
 
-5. **Bring the Simulator window to the foreground** so the app is visible:
+27. **Bring the Simulator window to the foreground** so the app is visible:
    ```bash
    open -a "Simulator" 2>/dev/null || osascript -e 'tell application "Simulator" to activate' 2>/dev/null
    ```
@@ -732,82 +748,45 @@ After the PR is created and merged (or if deploying directly from the feature br
    ps aux | grep -i "[S]imulator" | head -5
    ```
 
-6. **Verify the app launches** in the simulator — check for errors in the console output.
+28. **Verify the app launches** in the simulator — check for errors in the console output.
 
-7. **Stop the flutter run process** cleanly:
+29. **Stop the flutter run process** cleanly:
    ```bash
    pkill -f "flutter run" 2>/dev/null; sleep 1
    ```
 
 #### 5b. Android — Build, Deploy & Run in Emulator
 
-1. **List available Android virtual devices (AVDs):**
+30. **List available Android virtual devices (AVDs):**
    ```bash
    avdmanager list avd
    # or: flutter emulators --launch <emulator-id>
    ```
 
-2. **Launch the Android emulator:**
+31. **Launch the Android emulator:**
    ```bash
    flutter emulators --launch <emulator-id>
    # Wait for it to boot (check with: adb devices)
    sleep 30
    ```
 
-3. **Ensure dependencies are up to date:**
+32. **Ensure dependencies are up to date:**
    ```bash
    flutter pub get
    ```
 
-4. **Build and deploy to the Android emulator:**
+33. **Build and deploy to the Android emulator:**
    ```bash
    flutter run -d <emulator-id>
    ```
 
-5. **Verify the app launches** in the emulator — check for errors in the console output.
+34. **Verify the app launches** in the emulator — check for errors in the console output.
 
-6. **Stop the flutter run process** cleanly:
+35. **Stop the flutter run process** cleanly:
    ```bash
    pkill -f "flutter run" 2>/dev/null; sleep 1
    ```
 
-#### 5c. macOS — Build & Run Desktop App
-
-1. **Ensure dependencies are up to date:**
-   ```bash
-   flutter pub get
-   ```
-
-2. **Build and run the macOS desktop app:**
-   ```bash
-   flutter run -d macos
-   ```
-
-3. **Verify the app launches** on macOS — check for errors in the console output.
-
-4. **Stop the flutter run process** cleanly:
-   ```bash
-   pkill -f "flutter run" 2>/dev/null; sleep 1
-   ```
-
-#### 5d. Chrome Web — Build & Run in Browser
-
-1. **Ensure dependencies are up to date:**
-   ```bash
-   flutter pub get
-   ```
-
-2. **Build and run the web app in Chrome:**
-   ```bash
-   flutter run -d chrome --web-browser-flag="--disable-web-security"
-   ```
-
-3. **Verify the app launches** in Chrome — check for errors in the console output.
-
-4. **Stop the flutter run process** cleanly:
-   ```bash
-   pkill -f "flutter run" 2>/dev/null; sleep 1
-   ```
 
 ---
 
@@ -819,9 +798,9 @@ After the PR is created and merged (or if deploying directly from the feature br
 | 1 | Create branch: `<owner>-<phase>-STORY###` (use Story number, NOT Jira key) | ☐ | Gate 1 |
 | 2 | Push branch to remote origin | ☐ | Gate 1 |
 | 3 | Checkout and set active branch | ☐ | Gate 1 |
-| 4 | Transition Jira issue to In Progress (proper workflow transition, not raw status) | ☐ | Gate 2 |
+| 4 | Transition Jira issue to In Progress: `acli jira workitem transition --key <KEY> --status "In Progress"` | ☐ | Gate 2 |
 | 5 | Verify issue appears in correct swimlane/column on sprint board | ☐ | Gate 2 |
-| 6 | Assign Jira artifact to correct person | ☐ | Gate 2 |
+| 6 | Assign Jira artifact: `acli jira workitem assign --key <KEY> --assignee "@me"` | ☐ | Gate 2 |
 | **GATE 1 & 2 PASSED — Red Phase may begin** | | | |
 | 7 | Review design docs (Confluence/Figma) — if no changes needed, note "No design changes required" in Jira | ☐ | Gate 2.5 |
 | 8 | QA Agent reads story from Jira and creates test plan mapping AC → tests | ☐ | Gate 2.5 |
@@ -835,7 +814,7 @@ After the PR is created and merged (or if deploying directly from the feature br
 | 15 | Run `flutter test` — ensure ALL tests (new + existing) pass | ☐ | Gate 4 |
 | 16 | Post final TDD results to Jira comment (Red/Green/Refactor summary, full output, AC matrix) | ☐ | Gate 4 |
 | **GATE 4 PASSED — Status transition now permitted** | | | |
-| 17 | Only after tests posted: Transition Jira status to In Review | ☐ | Gate 5 |
+| 17 | Only after tests posted: Transition Jira status to In Review (`acli jira workitem transition --key <KEY> --status "In Review"`) | ☐ | Gate 5 |
 | 18 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
 | 19 | Push changes to remote origin | ☐ | Gate 5 |
 | 20 | Rebase onto latest main (`git fetch origin main && git rebase origin/main`) | ☐ | Gate 5.5 |
