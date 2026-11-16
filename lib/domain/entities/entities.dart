@@ -251,22 +251,37 @@ class UserPreferences {
 @collection
 class AllergySafeFood {
   Id id = Isar.autoIncrement;
+
+  /// The restaurant this safe food belongs to. Foreign key to [Restaurant.id].
+  @Index(type: IndexType.value)
+  int restaurantId = 0;
+
+  /// The display name of the food item confirmed safe for user's allergies.
   String itemName = '';
 
   /// When this safe-food entry was created.
   @Index(type: IndexType.value)
   DateTime createdAt = DateTime.now();
 
-  AllergySafeFood({required this.itemName});
+  AllergySafeFood({required this.itemName, this.restaurantId = 0});
 
-  AllergySafeFood copyWith({Id? id, String? itemName, DateTime? createdAt}) {
-    return AllergySafeFood(itemName: itemName ?? this.itemName)
+  AllergySafeFood copyWith({
+    Id? id,
+    int? restaurantId,
+    String? itemName,
+    DateTime? createdAt,
+  }) {
+    return AllergySafeFood(
+        itemName: itemName ?? this.itemName,
+        restaurantId: restaurantId ?? this.restaurantId,
+      )
       ..id = id ?? this.id
       ..createdAt = createdAt ?? this.createdAt;
   }
 
   @override
-  String toString() => 'AllergySafeFood(itemName: $itemName)';
+  String toString() =>
+      'AllergySafeFood(itemName: $itemName, restaurantId: $restaurantId)';
 }
 
 @collection
