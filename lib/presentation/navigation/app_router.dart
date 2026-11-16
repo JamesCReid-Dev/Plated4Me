@@ -27,12 +27,9 @@ class _AppRouterState extends ConsumerState<AppRouter> {
     final prefsAsync = ref.watch(userPreferencesDataProvider);
 
     return prefsAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, st) => Scaffold(
-        body: Center(child: Text('Error: $e')),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, st) => Scaffold(body: Center(child: Text('Error: $e'))),
       data: (prefs) {
         // AC-4: Show /onboarding gate only if onboarding not complete.
         final needsOnboarding = !prefs.onboardingComplete;
@@ -57,9 +54,7 @@ class _OnboardingGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const Scaffold(
-      body: OnboardingScreen(),
-    );
+    return const Scaffold(body: OnboardingScreen());
   }
 }
 
@@ -101,8 +96,14 @@ class _NavigationShellState extends State<_NavigationShell> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Browse'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: 'Favorites',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
         ],
       ),
       // AC-3: Quick Log FAB on Browse screen.
