@@ -25,7 +25,10 @@ class FailingRestaurantRepository implements RestaurantRepository {
   @override
   Future<Restaurant?> getRestaurantById(int id) async {
     try {
-      return data.firstWhere((r) => r.id == id, orElse: () => throw ArgumentError());
+      return data.firstWhere(
+        (r) => r.id == id,
+        orElse: () => throw ArgumentError(),
+      );
     } catch (_) {
       return null;
     }
@@ -34,7 +37,9 @@ class FailingRestaurantRepository implements RestaurantRepository {
   @override
   Future<List<Restaurant>> searchRestaurants(String query) async {
     if (query.trim().isEmpty) return [];
-    return data.where((r) => r.name.toLowerCase().contains(query.toLowerCase())).toList();
+    return data
+        .where((r) => r.name.toLowerCase().contains(query.toLowerCase()))
+        .toList();
   }
 
   @override
@@ -133,7 +138,10 @@ void main() {
 
     test('RepositoryException carries the original error when available', () {
       final original = _TestError('underlying cause');
-      final ex = RepositoryException.recoverable('Failed to load', error: original);
+      final ex = RepositoryException.recoverable(
+        'Failed to load',
+        error: original,
+      );
       expect(ex.error, equals(original));
     });
 
@@ -159,9 +167,7 @@ void main() {
   // -- AC-5: Retry logic tests (mirrors _retryWithBackoff in isar_storage.dart)
 
   group('AC-5 — Retry logic for transient failures', () {
-    test(
-        'retries once then succeeds when failure count is 1',
-        () async {
+    test('retries once then succeeds when failure count is 1', () async {
       var callCount = 0;
       final stopwatch = Stopwatch()..start();
 
@@ -180,9 +186,7 @@ void main() {
       expect(elapsed, lessThan(2000));
     });
 
-    test(
-        'retries twice then succeeds when failure count is 2',
-        () async {
+    test('retries twice then succeeds when failure count is 2', () async {
       var callCount = 0;
       final stopwatch = Stopwatch()..start();
 
@@ -208,33 +212,40 @@ void main() {
           callCount++;
           throw RepositoryException.recoverable('Always fails');
         }),
-        throwsA(isA<RepositoryException>().having(
-          (e) => e.isRecoverable,
-          'isRecoverable',
-          isTrue,
-        )),
+        throwsA(
+          isA<RepositoryException>().having(
+            (e) => e.isRecoverable,
+            'isRecoverable',
+            isTrue,
+          ),
+        ),
       );
       // Should be: initial + 2 retries = 3 calls
       expect(callCount, equals(3));
     });
 
-    test('does NOT retry on unrecoverable errors — fails immediately', () async {
-      var callCount = 0;
+    test(
+      'does NOT retry on unrecoverable errors — fails immediately',
+      () async {
+        var callCount = 0;
 
-      await expectLater(
-        () => _testRetryWithBackoff(() async {
-          callCount++;
-          throw RepositoryException.unrecoverable('Disk full');
-        }),
-        throwsA(isA<RepositoryException>().having(
-          (e) => e.isRecoverable,
-          'isRecoverable',
-          isFalse,
-        )),
-      );
-      // No retries for unrecoverable — only 1 call
-      expect(callCount, equals(1));
-    });
+        await expectLater(
+          () => _testRetryWithBackoff(() async {
+            callCount++;
+            throw RepositoryException.unrecoverable('Disk full');
+          }),
+          throwsA(
+            isA<RepositoryException>().having(
+              (e) => e.isRecoverable,
+              'isRecoverable',
+              isFalse,
+            ),
+          ),
+        );
+        // No retries for unrecoverable — only 1 call
+        expect(callCount, equals(1));
+      },
+    );
 
     test('succeeds on first attempt when no failure occurs', () async {
       var callCount = 0;
@@ -273,12 +284,13 @@ void main() {
     });
 
     test('unrecoverable exception has isRecoverable == false', () {
-      final unrecoverable = RepositoryException.unrecoverable('Schema corrupted');
+      final unrecoverable = RepositoryException.unrecoverable(
+        'Schema corrupted',
+      );
       expect(unrecoverable.isRecoverable, isFalse);
     });
 
-    test('saveRestaurant throws on invalid input after retries exhausted',
-        () async {
+    test('saveRestaurant throws on invalid input after retries exhausted', () async {
       // After 2 retry attempts, a persistently failing operation should throw.
       final repo = FailingRestaurantRepository()..alwaysFailRecoverable = true;
 

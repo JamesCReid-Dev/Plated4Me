@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plated4me/presentation/navigation/app_router.dart';
+
 import 'helpers.dart';
 
 void main() {
@@ -35,7 +36,11 @@ void main() {
         find.byType(BottomNavigationBar),
       );
       expect(navBar.currentIndex, 0, reason: 'AC-1: Browse is default tab');
-      expect(navBar.items[0].label, 'Browse', reason: 'AC-1: first tab labeled "Browse"');
+      expect(
+        navBar.items[0].label,
+        'Browse',
+        reason: 'AC-1: first tab labeled "Browse"',
+      );
     });
 
     testWidgets('second tab is Favorites', (tester) async {
@@ -50,7 +55,11 @@ void main() {
       final navBar = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
       );
-      expect(navBar.items[1].label, 'Favorites', reason: 'AC-1: second tab labeled "Favorites"');
+      expect(
+        navBar.items[1].label,
+        'Favorites',
+        reason: 'AC-1: second tab labeled "Favorites"',
+      );
     });
 
     testWidgets('third tab is Settings', (tester) async {
@@ -65,7 +74,11 @@ void main() {
       final navBar = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
       );
-      expect(navBar.items[2].label, 'Settings', reason: 'AC-1: third tab labeled "Settings"');
+      expect(
+        navBar.items[2].label,
+        'Settings',
+        reason: 'AC-1: third tab labeled "Settings"',
+      );
     });
 
     testWidgets('does NOT show Home or Profile tabs', (tester) async {
@@ -82,10 +95,16 @@ void main() {
       );
       final labels = navBar.items.map((item) => item.label).toList();
       expect(labels, isNot(contains('Home')), reason: 'AC-1: no Home tab');
-      expect(labels, isNot(contains('Profile')), reason: 'AC-1: no Profile tab');
+      expect(
+        labels,
+        isNot(contains('Profile')),
+        reason: 'AC-1: no Profile tab',
+      );
     });
 
-    testWidgets('tapping Favorites tab switches to second page', (tester) async {
+    testWidgets('tapping Favorites tab switches to second page', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: defaultPrefsContainer,
@@ -96,7 +115,10 @@ void main() {
 
       // Tap the second nav item area of BottomNavigationBar (1/3 from left)
       final navBarRect = tester.getRect(find.byType(BottomNavigationBar));
-      final tapOffset = Offset(navBarRect.left + (navBarRect.width * 2 / 6), navBarRect.top);
+      final tapOffset = Offset(
+        navBarRect.left + (navBarRect.width * 2 / 6),
+        navBarRect.top,
+      );
       await tester.tapAt(tapOffset);
       await tester.pumpAndSettle();
 
@@ -118,7 +140,10 @@ void main() {
       await tester.pumpAndSettle();
 
       final navBarRect = tester.getRect(find.byType(BottomNavigationBar));
-      final tapOffset = Offset(navBarRect.left + (navBarRect.width * 4 / 6), navBarRect.top);
+      final tapOffset = Offset(
+        navBarRect.left + (navBarRect.width * 4 / 6),
+        navBarRect.top,
+      );
       await tester.tapAt(tapOffset);
       await tester.pumpAndSettle();
 
@@ -140,10 +165,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(IndexedStack), findsOneWidget, reason: 'AC-2: IndexedStack used for tab body');
+      expect(
+        find.byType(IndexedStack),
+        findsOneWidget,
+        reason: 'AC-2: IndexedStack used for tab body',
+      );
     });
 
-    testWidgets('switching tabs preserves content in IndexedStack children', (tester) async {
+    testWidgets('switching tabs preserves content in IndexedStack children', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: defaultPrefsContainer,
@@ -152,11 +183,19 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final indexedStack = tester.widget<IndexedStack>(find.byType(IndexedStack));
-      expect(indexedStack.children.length, 3, reason: 'AC-2: IndexedStack has three children');
+      final indexedStack = tester.widget<IndexedStack>(
+        find.byType(IndexedStack),
+      );
+      expect(
+        indexedStack.children.length,
+        3,
+        reason: 'AC-2: IndexedStack has three children',
+      );
     });
 
-    testWidgets('switching to Favorites and back preserves Browse', (tester) async {
+    testWidgets('switching to Favorites and back preserves Browse', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: defaultPrefsContainer,
@@ -168,19 +207,31 @@ void main() {
       final navBarRect = tester.getRect(find.byType(BottomNavigationBar));
 
       // Switch to Favorites (second tab)
-      final tapOffset1 = Offset(navBarRect.left + (navBarRect.width * 2 / 6), navBarRect.top);
+      final tapOffset1 = Offset(
+        navBarRect.left + (navBarRect.width * 2 / 6),
+        navBarRect.top,
+      );
       await tester.tapAt(tapOffset1);
       await tester.pumpAndSettle();
 
       expect(find.text('Favorites'), findsWidgets);
 
       // Switch back to Browse (first tab)
-      final tapOffset0 = Offset(navBarRect.left + (navBarRect.width * 1 / 6), navBarRect.top);
+      final tapOffset0 = Offset(
+        navBarRect.left + (navBarRect.width * 1 / 6),
+        navBarRect.top,
+      );
       await tester.tapAt(tapOffset0);
       await tester.pumpAndSettle();
 
-      final indexedStack = tester.widget<IndexedStack>(find.byType(IndexedStack));
-      expect(indexedStack.children.length, 3, reason: 'AC-2: all three children preserved');
+      final indexedStack = tester.widget<IndexedStack>(
+        find.byType(IndexedStack),
+      );
+      expect(
+        indexedStack.children.length,
+        3,
+        reason: 'AC-2: all three children preserved',
+      );
     });
   });
 }

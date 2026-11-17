@@ -27,10 +27,26 @@ class OnboardingState {
 
   /// The 20 preset cuisine options (AC-2).
   static const presetCuisines = [
-    'Japanese', 'Mexican', 'Italian', 'Chinese', 'Thai',
-    'Indian', 'American', 'Mediterranean', 'French', 'Korean',
-    'Vietnamese', 'Greek', 'Turkish', 'Ethiopian', 'Brazilian',
-    'Lebanese', 'Spanish', 'German', 'Swedish', 'Indonesian',
+    'Japanese',
+    'Mexican',
+    'Italian',
+    'Chinese',
+    'Thai',
+    'Indian',
+    'American',
+    'Mediterranean',
+    'French',
+    'Korean',
+    'Vietnamese',
+    'Greek',
+    'Turkish',
+    'Ethiopian',
+    'Brazilian',
+    'Lebanese',
+    'Spanish',
+    'German',
+    'Swedish',
+    'Indonesian',
   ];
 
   /// Valid rating scale options (AC-3).
@@ -38,8 +54,12 @@ class OnboardingState {
 
   /// Pre-populated default occasions (AC-4).
   static const defaultOccasions = [
-    'Date Night', 'Family Dinner', 'Business Lunch',
-    'Quick Bite', 'Celebration', 'Trying Something New',
+    'Date Night',
+    'Family Dinner',
+    'Business Lunch',
+    'Quick Bite',
+    'Celebration',
+    'Trying Something New',
   ];
 
   /// Creates the initial onboarding state.
@@ -52,9 +72,9 @@ class OnboardingState {
     List<String>? cuisinePreferences,
     this.ratingScaleChoice,
     List<String>? selectedOccasions,
-  })  : selectedAllergens = selectedAllergens ?? [],
-        cuisinePreferences = cuisinePreferences ?? [],
-        selectedOccasions = selectedOccasions ?? [];
+  }) : selectedAllergens = selectedAllergens ?? [],
+       cuisinePreferences = cuisinePreferences ?? [],
+       selectedOccasions = selectedOccasions ?? [];
 
   // -- Screen navigation -------------------------------------------------------
 
@@ -78,7 +98,10 @@ class OnboardingState {
   void addAllergen(String name, AllergenSeverity severity) {
     final existingIndex = selectedAllergens.indexWhere((a) => a.name == name);
     if (existingIndex >= 0) {
-      selectedAllergens[existingIndex] = Allergen(name: name, severity: severity.value);
+      selectedAllergens[existingIndex] = Allergen(
+        name: name,
+        severity: severity.value,
+      );
     } else {
       selectedAllergens.add(Allergen(name: name, severity: severity.value));
     }

@@ -15,7 +15,11 @@ class RepositoryException implements Exception {
   /// The underlying cause, if available.
   final Object? error;
 
-  const RepositoryException._(this.message, {required this.isRecoverable, this.error});
+  const RepositoryException._(
+    this.message, {
+    required this.isRecoverable,
+    this.error,
+  });
 
   /// Creates a recoverable exception for transient failures.
   ///
@@ -34,5 +38,6 @@ class RepositoryException implements Exception {
   }
 
   @override
-  String toString() => 'RepositoryException(isRecoverable: $isRecoverable, message: $message)';
+  String toString() =>
+      'RepositoryException(isRecoverable: $isRecoverable, message: $message)';
 }
