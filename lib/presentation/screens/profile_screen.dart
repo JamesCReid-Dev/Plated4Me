@@ -17,15 +17,21 @@ class ProfileScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => _ErrorView(
           message: 'Failed to load preferences',
-          onRetry: () => ref.read(userPreferencesDataProvider.notifier).refresh(),
+          onRetry: () =>
+              ref.read(userPreferencesDataProvider.notifier).refresh(),
         ),
         data: (prefs) {
           return ListView(
             children: [
               // Onboarding status card
-              _OnboardingCard(prefs: prefs, onComplete: () {
-                ref.read(userPreferencesDataProvider.notifier).completeOnboarding();
-              }),
+              _OnboardingCard(
+                prefs: prefs,
+                onComplete: () {
+                  ref
+                      .read(userPreferencesDataProvider.notifier)
+                      .completeOnboarding();
+                },
+              ),
 
               const Divider(height: 32),
 
@@ -43,7 +49,10 @@ class ProfileScreen extends ConsumerWidget {
                           ? () => _updateRatingScale(ref, prefs.ratingScale - 1)
                           : null,
                     ),
-                    Text('${prefs.ratingScale}', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      '${prefs.ratingScale}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     IconButton(
                       icon: const Icon(Icons.add),
                       onPressed: prefs.ratingScale < 10
@@ -131,7 +140,8 @@ class _OnboardingCard extends StatelessWidget {
                     isComplete
                         ? 'You\'re all set! Start logging visits.'
                         : 'Configure your allergies and preferences.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -156,19 +166,19 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(message, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+        const SizedBox(height: 16),
+        Text(message, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
         ),
-      );
+      ],
+    ),
+  );
 }

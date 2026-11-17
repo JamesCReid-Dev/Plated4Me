@@ -7,6 +7,7 @@ import 'package:plated4me/presentation/screens/browse_screen.dart';
 import 'package:plated4me/presentation/screens/favorites_screen.dart';
 import 'package:plated4me/presentation/screens/quick_log_screen.dart';
 import 'package:plated4me/presentation/screens/settings_screen.dart';
+
 import 'helpers.dart';
 
 void main() {
@@ -53,7 +54,10 @@ void main() {
 
       // Switch to Favorites tab first
       final navBarRect = tester.getRect(find.byType(BottomNavigationBar));
-      final tapOffset1 = Offset(navBarRect.left + (navBarRect.width * 2 / 6), navBarRect.top);
+      final tapOffset1 = Offset(
+        navBarRect.left + (navBarRect.width * 2 / 6),
+        navBarRect.top,
+      );
       await tester.tapAt(tapOffset1);
       await tester.pumpAndSettle();
 
@@ -83,7 +87,10 @@ void main() {
 
       // Switch to Settings tab first
       final navBarRect = tester.getRect(find.byType(BottomNavigationBar));
-      final tapOffset2 = Offset(navBarRect.left + (navBarRect.width * 4 / 6), navBarRect.top);
+      final tapOffset2 = Offset(
+        navBarRect.left + (navBarRect.width * 4 / 6),
+        navBarRect.top,
+      );
       await tester.tapAt(tapOffset2);
       await tester.pumpAndSettle();
 
@@ -102,7 +109,9 @@ void main() {
       expect(scaffold.drawer, isNull, reason: 'AC-6: Settings has no drawer');
     });
 
-    testWidgets('BrowseScreen uses single-column scrollable layout', (tester) async {
+    testWidgets('BrowseScreen uses single-column scrollable layout', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: defaultPrefsContainer,

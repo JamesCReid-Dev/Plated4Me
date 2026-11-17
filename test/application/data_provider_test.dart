@@ -23,7 +23,10 @@ class MockRestaurantRepository implements RestaurantRepository {
   @override
   Future<Restaurant?> getRestaurantById(int id) async {
     try {
-      return data.firstWhere((r) => r.id == id, orElse: () => throw ArgumentError());
+      return data.firstWhere(
+        (r) => r.id == id,
+        orElse: () => throw ArgumentError(),
+      );
     } catch (_) {
       return null;
     }
@@ -32,7 +35,9 @@ class MockRestaurantRepository implements RestaurantRepository {
   @override
   Future<List<Restaurant>> searchRestaurants(String query) async {
     if (query.trim().isEmpty) return [];
-    return data.where((r) => r.name.toLowerCase().contains(query.toLowerCase())).toList();
+    return data
+        .where((r) => r.name.toLowerCase().contains(query.toLowerCase()))
+        .toList();
   }
 
   @override
@@ -59,7 +64,8 @@ class MockRestaurantRepository implements RestaurantRepository {
   }
 
   @override
-  Future<bool> existsByName(String name) async => data.any((r) => r.name == name);
+  Future<bool> existsByName(String name) async =>
+      data.any((r) => r.name == name);
 
   @override
   Future<Restaurant?> getByNamedAddress(String name, String? address) async {
@@ -120,7 +126,9 @@ class MockVisitRepository implements VisitRepository {
 
   @override
   Future<List<Visit>> getVisitsInRange(DateTime from, DateTime to) async {
-    return data.where((v) => v.createdAt.isAfter(from) && v.createdAt.isBefore(to)).toList();
+    return data
+        .where((v) => v.createdAt.isAfter(from) && v.createdAt.isBefore(to))
+        .toList();
   }
 
   @override
@@ -139,7 +147,9 @@ class MockVisitRepository implements VisitRepository {
       for (final entry in v.journalEntries) {
         if (entry.dishName.toLowerCase().contains(trimmed)) return true;
       }
-      if (v.generalNotes != null && v.generalNotes!.toLowerCase().contains(trimmed)) return true;
+      if (v.generalNotes != null &&
+          v.generalNotes!.toLowerCase().contains(trimmed))
+        return true;
       return false;
     }).toList();
   }
@@ -165,7 +175,9 @@ class MockUserPreferencesRepository implements UserPreferencesRepository {
   }
 
   @override
-  Future<UserPreferences> saveUserPreferences(UserPreferences preferences) async {
+  Future<UserPreferences> saveUserPreferences(
+    UserPreferences preferences,
+  ) async {
     stored = preferences;
     return preferences;
   }
@@ -186,9 +198,7 @@ void main() {
       ];
 
       final container = ProviderContainer(
-        overrides: [
-          restaurantRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [restaurantRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       // Wait for the initial load to complete.
@@ -205,9 +215,7 @@ void main() {
       final mockRepo = MockRestaurantRepository();
 
       final container = ProviderContainer(
-        overrides: [
-          restaurantRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [restaurantRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       await container.read(restaurantDataProvider.future);
@@ -223,20 +231,24 @@ void main() {
       mockRepo.data = [Restaurant(name: 'Initial')];
 
       final container = ProviderContainer(
-        overrides: [
-          restaurantRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [restaurantRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       await container.read(restaurantDataProvider.future);
-      expect((container.read(restaurantDataProvider) as AsyncData).value, hasLength(1));
+      expect(
+        (container.read(restaurantDataProvider) as AsyncData).value,
+        hasLength(1),
+      );
 
       // Add a new restaurant and refresh.
       mockRepo.data.add(Restaurant(name: 'New Place'));
       final provider = container.read(restaurantDataProvider.notifier);
       await provider.refresh();
 
-      expect((container.read(restaurantDataProvider) as AsyncData).value, hasLength(2));
+      expect(
+        (container.read(restaurantDataProvider) as AsyncData).value,
+        hasLength(2),
+      );
       container.dispose();
     });
 
@@ -245,19 +257,23 @@ void main() {
       mockRepo.data.add(Restaurant(name: 'Existing')..id = 1);
 
       final container = ProviderContainer(
-        overrides: [
-          restaurantRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [restaurantRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       await container.read(restaurantDataProvider.future);
-      expect((container.read(restaurantDataProvider) as AsyncData).value, hasLength(1));
+      expect(
+        (container.read(restaurantDataProvider) as AsyncData).value,
+        hasLength(1),
+      );
 
       final provider = container.read(restaurantDataProvider.notifier);
       await provider.saveRestaurant(Restaurant(name: 'New Place')..id = 2);
 
       expect(mockRepo.saveCallCount, equals(1));
-      expect((container.read(restaurantDataProvider) as AsyncData).value, hasLength(2));
+      expect(
+        (container.read(restaurantDataProvider) as AsyncData).value,
+        hasLength(2),
+      );
       container.dispose();
     });
 
@@ -266,20 +282,24 @@ void main() {
       await mockRepo.saveRestaurant(Restaurant(name: 'To Delete'));
 
       final container = ProviderContainer(
-        overrides: [
-          restaurantRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [restaurantRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       await container.read(restaurantDataProvider.future);
-      expect((container.read(restaurantDataProvider) as AsyncData).value, hasLength(1));
+      expect(
+        (container.read(restaurantDataProvider) as AsyncData).value,
+        hasLength(1),
+      );
 
       final provider = container.read(restaurantDataProvider.notifier);
       // Find the ID of the saved restaurant.
       final id = mockRepo.data.first.id;
       await provider.deleteRestaurant(id);
 
-      expect((container.read(restaurantDataProvider) as AsyncData).value, isEmpty);
+      expect(
+        (container.read(restaurantDataProvider) as AsyncData).value,
+        isEmpty,
+      );
       container.dispose();
     });
 
@@ -287,14 +307,15 @@ void main() {
       final mockRepo = MockRestaurantRepository()..throwOnSave = true;
 
       final container = ProviderContainer(
-        overrides: [
-          restaurantRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [restaurantRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       // Initial load succeeds (empty list).
       await container.read(restaurantDataProvider.future);
-      expect(container.read(restaurantDataProvider), isA<AsyncData<List<Restaurant>>>());
+      expect(
+        container.read(restaurantDataProvider),
+        isA<AsyncData<List<Restaurant>>>(),
+      );
 
       final provider = container.read(restaurantDataProvider.notifier);
       await provider.saveRestaurant(Restaurant(name: 'Should Fail'));
@@ -310,13 +331,19 @@ void main() {
     test('provides loaded data when repository returns visits', () async {
       final mockRepo = MockVisitRepository();
       mockRepo.data = [
-        Visit(restaurantId: 1, foodRating: 5.0, valueRating: 4.0, serviceRating: 5.0, overallRating: 5.0, compositeScore: 4.75, returnIntent: true),
+        Visit(
+          restaurantId: 1,
+          foodRating: 5.0,
+          valueRating: 4.0,
+          serviceRating: 5.0,
+          overallRating: 5.0,
+          compositeScore: 4.75,
+          returnIntent: true,
+        ),
       ];
 
       final container = ProviderContainer(
-        overrides: [
-          visitRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [visitRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       await container.read(visitsDataProvider.future);
@@ -331,36 +358,54 @@ void main() {
       final mockRepo = MockVisitRepository();
 
       final container = ProviderContainer(
-        overrides: [
-          visitRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [visitRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       await container.read(visitsDataProvider.future);
       expect((container.read(visitsDataProvider) as AsyncData).value, isEmpty);
 
       final provider = container.read(visitsDataProvider.notifier);
-      await provider.saveVisit(Visit(
-        restaurantId: 1, foodRating: 4.0, valueRating: 3.5, serviceRating: 4.5, overallRating: 4.0, compositeScore: 3.95, returnIntent: true,
-      ));
+      await provider.saveVisit(
+        Visit(
+          restaurantId: 1,
+          foodRating: 4.0,
+          valueRating: 3.5,
+          serviceRating: 4.5,
+          overallRating: 4.0,
+          compositeScore: 3.95,
+          returnIntent: true,
+        ),
+      );
 
-      expect((container.read(visitsDataProvider) as AsyncData).value, hasLength(1));
+      expect(
+        (container.read(visitsDataProvider) as AsyncData).value,
+        hasLength(1),
+      );
       container.dispose();
     });
 
     test('deleteVisit() removes and refreshes the list', () async {
       final mockRepo = MockVisitRepository();
-      final visit = Visit(restaurantId: 1, foodRating: 4.0, valueRating: 3.5, serviceRating: 4.5, overallRating: 4.0, compositeScore: 3.95, returnIntent: true);
+      final visit = Visit(
+        restaurantId: 1,
+        foodRating: 4.0,
+        valueRating: 3.5,
+        serviceRating: 4.5,
+        overallRating: 4.0,
+        compositeScore: 3.95,
+        returnIntent: true,
+      );
       await mockRepo.saveVisit(visit);
 
       final container = ProviderContainer(
-        overrides: [
-          visitRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [visitRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       await container.read(visitsDataProvider.future);
-      expect((container.read(visitsDataProvider) as AsyncData).value, hasLength(1));
+      expect(
+        (container.read(visitsDataProvider) as AsyncData).value,
+        hasLength(1),
+      );
 
       final provider = container.read(visitsDataProvider.notifier);
       await provider.deleteVisit(visit.id);
@@ -373,16 +418,24 @@ void main() {
       final mockRepo = MockVisitRepository()..throwOnSave = true;
 
       final container = ProviderContainer(
-        overrides: [
-          visitRepositoryProvider.overrideWith((_) => mockRepo),
-        ],
+        overrides: [visitRepositoryProvider.overrideWith((_) => mockRepo)],
       );
 
       await container.read(visitsDataProvider.future);
       expect(container.read(visitsDataProvider), isA<AsyncData<List<Visit>>>());
 
       final provider = container.read(visitsDataProvider.notifier);
-      await provider.saveVisit(Visit(restaurantId: 1, foodRating: 5.0, valueRating: 4.0, serviceRating: 5.0, overallRating: 5.0, compositeScore: 4.75, returnIntent: true));
+      await provider.saveVisit(
+        Visit(
+          restaurantId: 1,
+          foodRating: 5.0,
+          valueRating: 4.0,
+          serviceRating: 5.0,
+          overallRating: 5.0,
+          compositeScore: 4.75,
+          returnIntent: true,
+        ),
+      );
 
       final state = container.read(visitsDataProvider);
       expect(state, isA<AsyncError<Object?>>());
@@ -418,13 +471,23 @@ void main() {
       );
 
       await container.read(userPreferencesDataProvider.future);
-      expect((container.read(userPreferencesDataProvider) as AsyncData).value.ratingScale, equals(5));
+      expect(
+        (container.read(
+          userPreferencesDataProvider,
+        ) as AsyncData).value.ratingScale,
+        equals(5),
+      );
 
       final provider = container.read(userPreferencesDataProvider.notifier);
       final prefs = UserPreferences()..ratingScale = 10;
       await provider.savePreferences(prefs);
 
-      expect((container.read(userPreferencesDataProvider) as AsyncData).value.ratingScale, equals(10));
+      expect(
+        (container.read(
+          userPreferencesDataProvider,
+        ) as AsyncData).value.ratingScale,
+        equals(10),
+      );
       container.dispose();
     });
 
@@ -438,12 +501,22 @@ void main() {
       );
 
       await container.read(userPreferencesDataProvider.future);
-      expect((container.read(userPreferencesDataProvider) as AsyncData).value.onboardingComplete, isFalse);
+      expect(
+        (container.read(
+          userPreferencesDataProvider,
+        ) as AsyncData).value.onboardingComplete,
+        isFalse,
+      );
 
       final provider = container.read(userPreferencesDataProvider.notifier);
       await provider.completeOnboarding();
 
-      expect((container.read(userPreferencesDataProvider) as AsyncData).value.onboardingComplete, isTrue);
+      expect(
+        (container.read(
+          userPreferencesDataProvider,
+        ) as AsyncData).value.onboardingComplete,
+        isTrue,
+      );
       container.dispose();
     });
 
@@ -457,7 +530,10 @@ void main() {
       );
 
       // Initial load should fail.
-      await expectLater(container.read(userPreferencesDataProvider.future), throwsA(isA<Exception>()));
+      await expectLater(
+        container.read(userPreferencesDataProvider.future),
+        throwsA(isA<Exception>()),
+      );
       final state = container.read(userPreferencesDataProvider);
       expect(state, isA<AsyncError<Object?>>());
       container.dispose();

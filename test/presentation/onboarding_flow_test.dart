@@ -14,10 +14,7 @@ Widget _testWrapper(Widget child, {ProviderContainer? container}) {
   if (container != null) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: UncontrolledProviderScope(
-        container: container,
-        child: child,
-      ),
+      home: UncontrolledProviderScope(container: container, child: child),
     );
   }
   return MaterialApp(
@@ -28,30 +25,31 @@ Widget _testWrapper(Widget child, {ProviderContainer? container}) {
 
 void main() {
   group('OnboardingFlow — Screen Structure (AC-1 to AC-4)', () {
-    testWidgets('Screen 1 — Allergies screen shows title and add/remove controls', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets(
+      'Screen 1 — Allergies screen shows title and add/remove controls',
+      (tester) async {
+        await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
-      // AC-1: Title asking about allergies
-      expect(
-        find.text('Do you have any food allergies?'),
-        findsOneWidget,
-        reason: 'AC-1: Allergies screen title must be visible',
-      );
+        // AC-1: Title asking about allergies
+        expect(
+          find.text('Do you have any food allergies?'),
+          findsOneWidget,
+          reason: 'AC-1: Allergies screen title must be visible',
+        );
 
-      // Skip button always visible (FR-14) — uses TextButton
-      expect(
-        find.widgetWithText(TextButton, 'Skip for now'),
-        findsOneWidget,
-        reason: 'AC-1/AC-6: Skip button must be visible on allergies screen',
-      );
-    });
+        // Skip button always visible (FR-14) — uses TextButton
+        expect(
+          find.widgetWithText(TextButton, 'Skip for now'),
+          findsOneWidget,
+          reason: 'AC-1/AC-6: Skip button must be visible on allergies screen',
+        );
+      },
+    );
 
-    testWidgets('Screen 2 — Cuisine preferences shows preset chips (AC-2)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets('Screen 2 — Cuisine preferences shows preset chips (AC-2)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // Screen starts at allergies (screen 0). Verify skip button is present.
       expect(
@@ -68,10 +66,10 @@ void main() {
       );
     });
 
-    testWidgets('Screen 3 — Rating scale shows two card options (AC-3)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets('Screen 3 — Rating scale shows two card options (AC-3)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-3: Skip button visible on current screen
       expect(
@@ -81,25 +79,24 @@ void main() {
       );
     });
 
-    testWidgets('Screen 4 — Default occasions shows pre-populated chips (AC-4)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets(
+      'Screen 4 — Default occasions shows pre-populated chips (AC-4)',
+      (tester) async {
+        await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
-      // AC-4: Skip button visible on current screen
-      expect(
-        find.widgetWithText(TextButton, 'Skip for now'),
-        findsOneWidget,
-        reason: 'AC-4/AC-6: Skip button must be visible on occasions screen',
-      );
-    });
+        // AC-4: Skip button visible on current screen
+        expect(
+          find.widgetWithText(TextButton, 'Skip for now'),
+          findsOneWidget,
+          reason: 'AC-4/AC-6: Skip button must be visible on occasions screen',
+        );
+      },
+    );
   });
 
   group('OnboardingFlow — Skip Behavior (AC-6)', () {
     testWidgets('skip button is present on every screen', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-6: Every screen has "Skip for now"
       expect(
@@ -114,20 +111,23 @@ void main() {
     // Note: AC-5 completion behavior is tested in onboarding_gate_test.dart.
     // This test verifies that the OnboardingScreen's _complete() method
     // calls savePreferences with built preferences.
-    testWidgets('onboarding screen renders Next button to proceed through flow', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets(
+      'onboarding screen renders Next button to proceed through flow',
+      (tester) async {
+        await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
-      expect(find.text('Next'), findsOneWidget, reason: 'AC-5: Next button present for progression');
-    });
+        expect(
+          find.text('Next'),
+          findsOneWidget,
+          reason: 'AC-5: Next button present for progression',
+        );
+      },
+    );
   });
 
   group('OnboardingFlow — Allergen UI (AC-1)', () {
     testWidgets('can add an allergen with severity selection', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-1: Add allergen control should be present
       expect(
@@ -137,10 +137,10 @@ void main() {
       );
     });
 
-    testWidgets('severity options show Moderate and Severe (AC-1)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets('severity options show Moderate and Severe (AC-1)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-1: Severity selection should offer Moderate and Severe
       expect(
@@ -155,10 +155,10 @@ void main() {
       );
     });
 
-    testWidgets('added allergens display as removable chips (AC-1)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets('added allergens display as removable chips (AC-1)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-1: Chip type exists in the widget tree (FilterChip for severity, Chip for allergens)
       expect(
@@ -170,10 +170,10 @@ void main() {
   });
 
   group('OnboardingFlow — Cuisine UI (AC-2)', () {
-    testWidgets('preset cuisine chips are displayed (~20 options) (AC-2)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets('preset cuisine chips are displayed (~20 options) (AC-2)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-2: Next button to navigate to cuisine screen exists
       expect(
@@ -184,9 +184,7 @@ void main() {
     });
 
     testWidgets('Custom button allows free-text entry (AC-2)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-2: Next button to reach cuisine screen with Custom option
       expect(
@@ -198,10 +196,10 @@ void main() {
   });
 
   group('OnboardingFlow — Rating Scale UI (AC-3)', () {
-    testWidgets('two large tappable cards for rating scale selection (AC-3)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets('two large tappable cards for rating scale selection (AC-3)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-3: Next button to navigate to rating scale screen exists
       expect(
@@ -212,9 +210,7 @@ void main() {
     });
 
     testWidgets('5-star card displays star icons (AC-3)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-3: Severity radio buttons exist on allergies screen as baseline
       expect(
@@ -226,10 +222,10 @@ void main() {
   });
 
   group('OnboardingFlow — Occasions UI (AC-4)', () {
-    testWidgets('pre-populated occasion chips are displayed (AC-4)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+    testWidgets('pre-populated occasion chips are displayed (AC-4)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-4: Next button to navigate to occasions screen exists
       expect(
@@ -240,9 +236,7 @@ void main() {
     });
 
     testWidgets('can add custom occasion (AC-4)', (tester) async {
-      await tester.pumpWidget(
-        _testWrapper(const OnboardingScreen()),
-      );
+      await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
       // AC-4: Add button for allergens exists on current screen
       expect(

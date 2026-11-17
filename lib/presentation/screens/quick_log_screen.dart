@@ -2,10 +2,15 @@
 ///
 /// P4ME-15 (S07): Four weighted sliders, real-time composite score, return intent toggle,
 /// and save button. All ratings use the user's chosen scale from preferences.
+/// P4ME-16 (S08): Five optional accordion sections for meal details, line items,
+/// journal entries, allergy-safe foods, and restaurant notes.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plated4me/application/providers/allergy_safe_food_provider.dart';
 import 'package:plated4me/application/providers/data_providers.dart';
+import 'package:plated4me/application/providers/quick_log_form_provider.dart';
 import 'package:plated4me/application/providers/visit_rating_provider.dart';
+import 'package:plated4me/domain/entities/entities.dart';
 
 // -- Rating definitions --------------------------------------------------------
 
@@ -65,6 +70,9 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
   /// Current rating scale from user preferences (5 or 10).
   int _scale = 5;
 
+  /// Accordion expanded state: [Meal, LineItems, Journal, AllergySafe, Notes]
+  final List<bool> _expanded = [false, false, false, false, false];
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +81,10 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
     prefs.whenData(
       (p) => setState(() => _scale = p.ratingScale),
     );
+  }
+
+  void _toggleAccordion(int index) {
+    setState(() => _expanded[index] = !_expanded[index]);
   }
 
   /// Returns a list of tick labels for the given scale.
@@ -134,6 +146,15 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
                     _ReturnIntentToggle(
                       value: state.returnIntent,
                       onChanged: notifier.toggleReturnIntent,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // -- Optional sections accordion (P4ME-16, AC-1) ------------------
+                    _OptionalSectionsAccordion(
+                      expanded: _expanded,
+                      onToggle: _toggleAccordion,
+                      form: ref.read(quickLogFormProvider),
                     ),
                   ],
               ),
@@ -399,6 +420,421 @@ class _ReturnIntentToggle extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// -- Optional sections accordion (P4ME-16, AC-1, AC-4) -------------------------
+
+/// Five independently expandable/collapsible accordion sections.
+class _OptionalSectionsAccordion extends StatelessWidget {
+  final List<bool> expanded;
+  final ValueChanged<int> onToggle;
+  final QuickLogFormData form;
+
+  const _OptionalSectionsAccordion({
+    required this.expanded,
+    required this.onToggle,
+    required this.form,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Section 0: Meal total + tip + employee name + note
+        _AccordionSection(
+          title: 'Meal Details',
+          isExpanded: expanded[0],
+          onToggle: () => onToggle(0),
+          child: _MealDetailsSection(form: form),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Section 1: Visit line items
+        _AccordionSection(
+          title: 'Line Items',
+          isExpanded: expanded[1],
+          onToggle: () => onToggle(1),
+          child: _LineItemsSection(form: form, notifier: null),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Section 2: Food journal
+        _AccordionSection(
+          title: 'Food Journal',
+          isExpanded: expanded[2],
+          onToggle: () => onToggle(2),
+          child: _JournalEntriesSection(form: form, notifier: null),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Section 3: Allergy-safe foods
+        _AccordionSection(
+          title: 'Allergy-Safe Foods',
+          isExpanded: expanded[3],
+          onToggle: () => onToggle(3),
+          child: const _AllergySafeFoodsSection(),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Section 4: Restaurant notes
+        _AccordionSection(
+          title: 'Restaurant Notes',
+          isExpanded: expanded[4],
+          onToggle: () => onToggle(4),
+          child: _RestaurantNotesSection(form: form),
+        ),
+      ],
+    );
+  }
+}
+
+/// A single accordion section with surface-overlay background, no elevation.
+class _AccordionSection extends StatelessWidget {
+  final String title;
+  final bool isExpanded;
+  final VoidCallback onToggle;
+  final Widget child;
+
+  const _AccordionSection({
+    required this.title,
+    required this.isExpanded,
+    required this.onToggle,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onToggle,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isExpanded ? Icons.expand_less : Icons.chevron_right_rounded,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            if (isExpanded) ...[
+              const SizedBox(height: 12),
+              child,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// -- Section 0: Meal details
+
+/// Meal total, tip percentage, and employee/server name fields.
+class _MealDetailsSection extends StatelessWidget {
+  final QuickLogFormData form;
+
+  const _MealDetailsSection({required this.form});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          controller: form.mealTotalController ?? TextEditingController(),
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Meal Total (\$)',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            hintText: '0.00',
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: form.tipPercentController ?? TextEditingController(),
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Tip (%)',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            hintText: '0',
+            suffixText: '%',
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: form.employeeNameController ?? TextEditingController(),
+          decoration: const InputDecoration(
+            labelText: 'Employee / Server Name',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            hintText: 'e.g. Alex',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// -- Section 1: Visit line items -----------------------------------------------
+
+/// Dish name + optional price with "Add another" button.
+class _LineItemsSection extends StatelessWidget {
+  final QuickLogFormData form;
+  final QuickLogFormNotifier? notifier;
+
+  const _LineItemsSection({required this.form, required this.notifier});
+
+  @override
+  Widget build(BuildContext context) {
+    // Always show at least one empty entry so input fields are visible.
+    final items = form.lineItems.isEmpty ? [VisitLineItem(dishName: '')] : form.lineItems;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    initialValue: item.dishName,
+                    decoration: const InputDecoration(
+                      labelText: 'Dish Name',
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    onChanged: (value) {},
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 100,
+                  child: TextFormField(
+                    initialValue: item.price?.toStringAsFixed(2),
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Price',
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      hintText: '0.00',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: notifier != null
+                      ? () => notifier!.removeLineItem(form.lineItems.indexOf(item))
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: notifier != null
+              ? () {
+                  final empty = VisitLineItem(dishName: '');
+                  notifier!.addLineItem(empty.dishName, null);
+                }
+              : null,
+          icon: const Icon(Icons.add),
+          label: const Text('Add Another'),
+        ),
+      ],
+    );
+  }
+}
+
+// -- Section 2: Food journal entries -------------------------------------------
+
+/// Dish name + impressions with "Add another" button.
+class _JournalEntriesSection extends StatelessWidget {
+  final QuickLogFormData form;
+  final QuickLogFormNotifier? notifier;
+
+  const _JournalEntriesSection({required this.form, required this.notifier});
+
+  @override
+  Widget build(BuildContext context) {
+    // Always show at least one empty entry so input fields are visible.
+    final entries = form.journalEntries.isEmpty ? [JournalEntry(dishName: '', impressions: '')] : form.journalEntries;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ...entries.map(
+          (entry) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextFormField(
+                  initialValue: entry.dishName,
+                  decoration: const InputDecoration(
+                    labelText: 'Dish Name',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  initialValue: entry.impressions,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Impressions',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    hintText: 'Describe your experience...',
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: notifier != null
+                        ? () => notifier!.removeJournalEntry(
+                            form.journalEntries.indexOf(entry),
+                          )
+                        : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: notifier != null
+              ? () {
+                  final empty = JournalEntry(dishName: '', impressions: '');
+                  notifier!.addJournalEntry(empty.dishName, empty.impressions);
+                }
+              : null,
+          icon: const Icon(Icons.add),
+          label: const Text('Add Another'),
+        ),
+      ],
+    );
+  }
+}
+
+// -- Section 3: Allergy-safe foods ---------------------------------------------
+
+/// Add/remove from per-restaurant safe food list.
+class _AllergySafeFoodsSection extends ConsumerWidget {
+  const _AllergySafeFoodsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final safeFoods = ref.watch(allergySafeFoodsProvider);
+
+    return safeFoods.when(
+      loading: () => const Center(child: SizedBox(height: 40)),
+      error: (e, st) => Padding(
+        padding: const EdgeInsets.all(8),
+        child: Text('Error loading safe foods: $e'),
+      ),
+      data: (foods) {
+        if (foods.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'No allergy-safe foods saved yet. Add them from the restaurant detail view.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: foods.map((food) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 18,
+                      color: Colors.green,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(food.itemName)),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline,
+                          color: Colors.orange),
+                      onPressed: () async {
+                        await ref.read(allergySafeFoodsProvider.notifier)
+                            .removeSafeFood(food.id);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+// -- Section 4: Restaurant notes -----------------------------------------------
+
+/// Pre-populated if restaurant exists; editable.
+class _RestaurantNotesSection extends StatelessWidget {
+  final QuickLogFormData form;
+
+  const _RestaurantNotesSection({required this.form});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: form.generalNotesController ?? TextEditingController(),
+      maxLines: 4,
+      decoration: const InputDecoration(
+        labelText: 'Restaurant Notes',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        hintText: 'e.g. Great ambiance, noisy during lunch rush...',
       ),
     );
   }

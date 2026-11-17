@@ -25,9 +25,7 @@ class HomeScreen extends ConsumerWidget {
             return const Center(child: _EmptyState());
           }
           // Show most recent first, limited to 20 for performance.
-          final sorted = visits
-              .where((v) => v.overallRating > 0)
-              .toList()
+          final sorted = visits.where((v) => v.overallRating > 0).toList()
             ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           final display = sorted.take(20).toList();
           return RefreshIndicator(
@@ -71,7 +69,11 @@ class _VisitTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (visit.generalNotes != null && visit.generalNotes!.isNotEmpty)
-            Text(visit.generalNotes!, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(
+              visit.generalNotes!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           Text(
             'Food ${visit.foodRating.toStringAsFixed(1)} · Value ${visit.valueRating.toStringAsFixed(1)} · Service ${visit.serviceRating.toStringAsFixed(1)}',
             style: theme.textTheme.bodySmall,
@@ -82,10 +84,7 @@ class _VisitTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(
-            _formatDate(visit.createdAt),
-            style: theme.textTheme.bodySmall,
-          ),
+          Text(_formatDate(visit.createdAt), style: theme.textTheme.bodySmall),
           if (visit.returnIntent)
             const Icon(Icons.check_circle, size: 16, color: Colors.green),
         ],
@@ -109,19 +108,19 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.restaurant_menu, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('No visits yet', style: TextStyle(fontSize: 18)),
-          SizedBox(height: 8),
-          Text(
-            'Browse restaurants and log your first visit!',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Icon(Icons.restaurant_menu, size: 64, color: Colors.grey),
+      SizedBox(height: 16),
+      Text('No visits yet', style: TextStyle(fontSize: 18)),
+      SizedBox(height: 8),
+      Text(
+        'Browse restaurants and log your first visit!',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.grey),
+      ),
+    ],
+  );
 }
 
 /// Reusable error view with retry button.
@@ -132,19 +131,19 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(message, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+        const SizedBox(height: 16),
+        Text(message, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
         ),
-      );
+      ],
+    ),
+  );
 }

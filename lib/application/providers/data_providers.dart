@@ -13,22 +13,25 @@ import 'package:plated4me/infrastructure/storage/isar_storage.dart';
 // -- Repository singleton providers --------------------------------------------
 
 /// Singleton provider for the [RestaurantRepository] implementation.
-final Provider<RestaurantRepository> restaurantRepositoryProvider = Provider<RestaurantRepository>(
-    (_) => IsarRestaurantRepository(),
-    name: 'restaurantRepository',
-  );
+final Provider<RestaurantRepository> restaurantRepositoryProvider =
+    Provider<RestaurantRepository>(
+      (_) => IsarRestaurantRepository(),
+      name: 'restaurantRepository',
+    );
 
 /// Singleton provider for the [VisitRepository] implementation.
-final Provider<VisitRepository> visitRepositoryProvider = Provider<VisitRepository>(
-    (_) => IsarVisitRepository(),
-    name: 'visitRepository',
-  );
+final Provider<VisitRepository> visitRepositoryProvider =
+    Provider<VisitRepository>(
+      (_) => IsarVisitRepository(),
+      name: 'visitRepository',
+    );
 
 /// Singleton provider for the [UserPreferencesRepository] implementation.
-final Provider<UserPreferencesRepository> userPreferencesRepositoryProvider = Provider<UserPreferencesRepository>(
-    (_) => IsarUserPreferencesRepository(),
-    name: 'userPreferencesRepository',
-  );
+final Provider<UserPreferencesRepository> userPreferencesRepositoryProvider =
+    Provider<UserPreferencesRepository>(
+      (_) => IsarUserPreferencesRepository(),
+      name: 'userPreferencesRepository',
+    );
 
 // -- Data AsyncNotifierProviders -----------------------------------------------
 
@@ -73,11 +76,12 @@ class RestaurantDataProvider extends AsyncNotifier<List<Restaurant>> {
 }
 
 /// Provider for [Restaurant] data.
-final AsyncNotifierProvider<RestaurantDataProvider, List<Restaurant>> restaurantDataProvider =
-        AsyncNotifierProvider<RestaurantDataProvider, List<Restaurant>>(
-            () => RestaurantDataProvider(),
-            name: 'restaurantData',
-          );
+final AsyncNotifierProvider<RestaurantDataProvider, List<Restaurant>>
+restaurantDataProvider =
+    AsyncNotifierProvider<RestaurantDataProvider, List<Restaurant>>(
+      () => RestaurantDataProvider(),
+      name: 'restaurantData',
+    );
 
 /// Notifier that loads and manages the list of [Visit] records.
 class VisitDataProvider extends AsyncNotifier<List<Visit>> {
@@ -121,14 +125,13 @@ class VisitDataProvider extends AsyncNotifier<List<Visit>> {
 
 /// Provider for [Visit] data.
 final AsyncNotifierProvider<VisitDataProvider, List<Visit>> visitsDataProvider =
-        AsyncNotifierProvider<VisitDataProvider, List<Visit>>(
-            () => VisitDataProvider(),
-            name: 'visitsData',
-          );
+    AsyncNotifierProvider<VisitDataProvider, List<Visit>>(
+      () => VisitDataProvider(),
+      name: 'visitsData',
+    );
 
 /// Notifier that manages user preferences.
-class UserPreferencesDataProvider
-    extends AsyncNotifier<UserPreferences> {
+class UserPreferencesDataProvider extends AsyncNotifier<UserPreferences> {
   @override
   Future<UserPreferences> build() {
     _repository = ref.read(userPreferencesRepositoryProvider);
@@ -170,8 +173,9 @@ class UserPreferencesDataProvider
 }
 
 /// Provider for user preferences data.
-final AsyncNotifierProvider<UserPreferencesDataProvider, UserPreferences> userPreferencesDataProvider =
-        AsyncNotifierProvider<UserPreferencesDataProvider, UserPreferences>(
-            () => UserPreferencesDataProvider(),
-            name: 'userPreferencesData',
-          );
+final AsyncNotifierProvider<UserPreferencesDataProvider, UserPreferences>
+userPreferencesDataProvider =
+    AsyncNotifierProvider<UserPreferencesDataProvider, UserPreferences>(
+      () => UserPreferencesDataProvider(),
+      name: 'userPreferencesData',
+    );

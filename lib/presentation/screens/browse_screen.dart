@@ -46,14 +46,16 @@ class BrowseScreen extends ConsumerWidget {
                     ),
                   ),
                   title: Text(restaurant.name),
-                  subtitle: restaurant.address != null &&
+                  subtitle:
+                      restaurant.address != null &&
                           restaurant.address!.isNotEmpty
                       ? Text(restaurant.address!)
                       : const Text('No address recorded'),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                     tooltip: 'Delete "${restaurant.name}"',
-                    onPressed: () => _showDeleteConfirm(context, ref, restaurant),
+                    onPressed: () =>
+                        _showDeleteConfirm(context, ref, restaurant),
                   ),
                 );
               },
@@ -109,8 +111,15 @@ class BrowseScreen extends ConsumerWidget {
             onPressed: () {
               final name = nameCtrl.text.trim();
               if (name.isEmpty) return;
-              ref.read(restaurantDataProvider.notifier).saveRestaurant(
-                    Restaurant(name: name, address: addressCtrl.text.trim().isEmpty ? null : addressCtrl.text.trim()),
+              ref
+                  .read(restaurantDataProvider.notifier)
+                  .saveRestaurant(
+                    Restaurant(
+                      name: name,
+                      address: addressCtrl.text.trim().isEmpty
+                          ? null
+                          : addressCtrl.text.trim(),
+                    ),
                   );
               Navigator.pop(ctx);
             },
@@ -138,7 +147,9 @@ class BrowseScreen extends ConsumerWidget {
           ),
           FilledButton.tonal(
             onPressed: () {
-              ref.read(restaurantDataProvider.notifier).deleteRestaurant(restaurant.id);
+              ref
+                  .read(restaurantDataProvider.notifier)
+                  .deleteRestaurant(restaurant.id);
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(foregroundColor: Colors.red),
@@ -156,19 +167,19 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.restaurant, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('No restaurants yet', style: TextStyle(fontSize: 18)),
-          SizedBox(height: 8),
-          Text(
-            'Tap + to add your first restaurant!',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Icon(Icons.restaurant, size: 64, color: Colors.grey),
+      SizedBox(height: 16),
+      Text('No restaurants yet', style: TextStyle(fontSize: 18)),
+      SizedBox(height: 8),
+      Text(
+        'Tap + to add your first restaurant!',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.grey),
+      ),
+    ],
+  );
 }
 
 /// Reusable error view with retry button.
@@ -179,19 +190,19 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(message, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+        const SizedBox(height: 16),
+        Text(message, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
         ),
-      );
+      ],
+    ),
+  );
 }

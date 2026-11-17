@@ -11,7 +11,9 @@ void main() {
     // Override providers to avoid Isar dependency in this smoke test.
     final container = ProviderContainer(
       overrides: [
-        userPreferencesDataProvider.overrideWith(() => _FakeUserPrefsNotifier()),
+        userPreferencesDataProvider.overrideWith(
+          () => _FakeUserPrefsNotifier(),
+        ),
         restaurantDataProvider.overrideWith(() => _FakeRestaurantNotifier()),
       ],
     );

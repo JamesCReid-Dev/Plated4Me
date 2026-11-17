@@ -10,8 +10,7 @@ void main() {
   // -- AC-6: Correct weighted calculation ------------------------------------
 
   group('AC-6 — computeCompositeScore', () {
-    test('computes correct weighted score for standard ratings (4.0, 3.5, 4.5, 4.0)',
-        () {
+    test('computes correct weighted score for standard ratings (4.0, 3.5, 4.5, 4.0)', () {
       // Weights: food 0.40, value 0.30, service 0.15, overall 0.15
       // Expected: 4.0*0.40 + 3.5*0.30 + 4.5*0.15 + 4.0*0.15 = 1.60 + 1.05 + 0.675 + 0.60 = 3.925
       final score = computeCompositeScore(
@@ -142,10 +141,16 @@ void main() {
     test('food rating has the highest weight (0.40)', () {
       // Increasing food by 1.0 should increase score by exactly 0.40
       final base = computeCompositeScore(
-        food: 3.0, value: 4.0, service: 4.0, overall: 4.0,
+        food: 3.0,
+        value: 4.0,
+        service: 4.0,
+        overall: 4.0,
       );
       final elevated = computeCompositeScore(
-        food: 4.0, value: 4.0, service: 4.0, overall: 4.0,
+        food: 4.0,
+        value: 4.0,
+        service: 4.0,
+        overall: 4.0,
       );
 
       expect(elevated - base, closeTo(0.40, 0.0001));
@@ -153,10 +158,16 @@ void main() {
 
     test('value rating has weight 0.30', () {
       final base = computeCompositeScore(
-        food: 4.0, value: 3.0, service: 4.0, overall: 4.0,
+        food: 4.0,
+        value: 3.0,
+        service: 4.0,
+        overall: 4.0,
       );
       final elevated = computeCompositeScore(
-        food: 4.0, value: 4.0, service: 4.0, overall: 4.0,
+        food: 4.0,
+        value: 4.0,
+        service: 4.0,
+        overall: 4.0,
       );
 
       expect(elevated - base, closeTo(0.30, 0.0001));
@@ -164,10 +175,16 @@ void main() {
 
     test('service rating has weight 0.15', () {
       final base = computeCompositeScore(
-        food: 4.0, value: 4.0, service: 3.0, overall: 4.0,
+        food: 4.0,
+        value: 4.0,
+        service: 3.0,
+        overall: 4.0,
       );
       final elevated = computeCompositeScore(
-        food: 4.0, value: 4.0, service: 4.0, overall: 4.0,
+        food: 4.0,
+        value: 4.0,
+        service: 4.0,
+        overall: 4.0,
       );
 
       expect(elevated - base, closeTo(0.15, 0.0001));
@@ -175,10 +192,16 @@ void main() {
 
     test('overall rating has weight 0.15', () {
       final base = computeCompositeScore(
-        food: 4.0, value: 4.0, service: 4.0, overall: 3.0,
+        food: 4.0,
+        value: 4.0,
+        service: 4.0,
+        overall: 3.0,
       );
       final elevated = computeCompositeScore(
-        food: 4.0, value: 4.0, service: 4.0, overall: 4.0,
+        food: 4.0,
+        value: 4.0,
+        service: 4.0,
+        overall: 4.0,
       );
 
       expect(elevated - base, closeTo(0.15, 0.0001));
@@ -186,18 +209,20 @@ void main() {
 
     // -- Return intent derivation ----------------------------------------------
 
-    test('returns true when composite score >= 3.5 (return intent threshold)',
-        () {
-      final result = computeCompositeScoreWithReturnIntent(
-        food: 4.0,
-        value: 4.0,
-        service: 3.0,
-        overall: 4.0,
-      );
-      // Score: 1.6 + 1.2 + 0.45 + 0.6 = 3.85 >= 3.5 → returnIntent = true
-      expect(result.score, closeTo(3.85, 0.0001));
-      expect(result.returnIntent, isTrue);
-    });
+    test(
+      'returns true when composite score >= 3.5 (return intent threshold)',
+      () {
+        final result = computeCompositeScoreWithReturnIntent(
+          food: 4.0,
+          value: 4.0,
+          service: 3.0,
+          overall: 4.0,
+        );
+        // Score: 1.6 + 1.2 + 0.45 + 0.6 = 3.85 >= 3.5 → returnIntent = true
+        expect(result.score, closeTo(3.85, 0.0001));
+        expect(result.returnIntent, isTrue);
+      },
+    );
 
     test('returns false when composite score < 3.5 (no return intent)', () {
       final result = computeCompositeScoreWithReturnIntent(

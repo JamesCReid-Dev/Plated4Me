@@ -56,7 +56,9 @@ void main() {
     });
 
     test('goes back to previous screen', () {
-      final state = OnboardingState.initial()..nextScreen()..nextScreen();
+      final state = OnboardingState.initial()
+        ..nextScreen()
+        ..nextScreen();
 
       state.previousScreen();
 
@@ -84,7 +86,10 @@ void main() {
 
       expect(state.selectedAllergens, hasLength(1));
       expect(state.selectedAllergens[0].name, equals('Peanuts'));
-      expect(state.selectedAllergens[0].severity, equals(AllergenSeverity.moderate.value));
+      expect(
+        state.selectedAllergens[0].severity,
+        equals(AllergenSeverity.moderate.value),
+      );
     });
 
     test('adds an allergen with Severe severity', () {
@@ -92,7 +97,10 @@ void main() {
 
       state.addAllergen('Shellfish', AllergenSeverity.severe);
 
-      expect(state.selectedAllergens[0].severity, equals(AllergenSeverity.severe.value));
+      expect(
+        state.selectedAllergens[0].severity,
+        equals(AllergenSeverity.severe.value),
+      );
     });
 
     test('removes an allergen by name', () {
@@ -113,7 +121,10 @@ void main() {
       state.addAllergen('Peanuts', AllergenSeverity.severe);
 
       expect(state.selectedAllergens, hasLength(1));
-      expect(state.selectedAllergens[0].severity, equals(AllergenSeverity.severe.value));
+      expect(
+        state.selectedAllergens[0].severity,
+        equals(AllergenSeverity.severe.value),
+      );
     });
   });
 
@@ -282,7 +293,10 @@ void main() {
 
       expect(prefs.allergies, hasLength(1));
       expect(prefs.allergies[0].name, equals('Eggs'));
-      expect(prefs.allergies[0].severity, equals(AllergenSeverity.severe.value));
+      expect(
+        prefs.allergies[0].severity,
+        equals(AllergenSeverity.severe.value),
+      );
       expect(prefs.cuisinePreferences, contains('Italian'));
       expect(prefs.cuisinePreferences, contains('Thai'));
       expect(prefs.ratingScale, equals(10));

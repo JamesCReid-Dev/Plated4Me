@@ -4,11 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plated4me/application/providers/data_providers.dart';
 import 'package:plated4me/presentation/navigation/app_router.dart';
+
 import 'helpers.dart';
 
 void main() {
   group('AC-4 — Onboarding pre-nav gate route', () {
-    testWidgets('shows onboarding screen when onboardingComplete is false', (tester) async {
+    testWidgets('shows onboarding screen when onboardingComplete is false', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: incompleteOnboardingContainer,
@@ -20,7 +23,8 @@ void main() {
       expect(
         find.text('Do you have any food allergies?'),
         findsWidgets,
-        reason: 'AC-4: Allergies screen title visible when onboarding incomplete',
+        reason:
+            'AC-4: Allergies screen title visible when onboarding incomplete',
       );
 
       expect(
@@ -30,7 +34,9 @@ void main() {
       );
     });
 
-    testWidgets('shows navigation shell when onboardingComplete is true', (tester) async {
+    testWidgets('shows navigation shell when onboardingComplete is true', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: defaultPrefsContainer,
@@ -79,7 +85,9 @@ void main() {
       );
     });
 
-    testWidgets('completing onboarding transitions to navigation shell', (tester) async {
+    testWidgets('completing onboarding transitions to navigation shell', (
+      tester,
+    ) async {
       final container = incompleteOnboardingContainer;
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -92,7 +100,9 @@ void main() {
       expect(find.text('Do you have any food allergies?'), findsWidgets);
 
       // Complete onboarding via the notifier
-      await container.read(userPreferencesDataProvider.notifier).completeOnboarding();
+      await container
+          .read(userPreferencesDataProvider.notifier)
+          .completeOnboarding();
       await tester.pumpAndSettle();
 
       expect(
