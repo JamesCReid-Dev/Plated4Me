@@ -63,15 +63,12 @@ class BrowseScreen extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddRestaurantDialog(context, ref),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Restaurant'),
-      ),
     );
   }
 
-  void _showAddRestaurantDialog(BuildContext context, WidgetRef ref) {
+  /// Shows the Add Restaurant dialog.
+  /// Extracted as a static helper so it can be called from [AppRouter].
+  static void showAddRestaurantDialog(BuildContext context, WidgetRef ref) {
     final nameCtrl = TextEditingController();
     final addressCtrl = TextEditingController();
 
@@ -86,7 +83,7 @@ class BrowseScreen extends ConsumerWidget {
               controller: nameCtrl,
               decoration: const InputDecoration(
                 labelText: 'Restaurant Name',
-                hintText: 'e.g. Joe\'s Pizza',
+                hintText: "e.g. Joe's Pizza",
                 border: OutlineInputBorder(),
               ),
               autofocus: true,

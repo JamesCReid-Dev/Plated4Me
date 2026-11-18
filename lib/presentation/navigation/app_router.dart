@@ -59,7 +59,7 @@ class _OnboardingGate extends ConsumerWidget {
 }
 
 /// Navigation shell — IndexedStack with BottomNavigationBar and Quick Log FAB.
-class _NavigationShell extends StatefulWidget {
+class _NavigationShell extends ConsumerStatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onPageSelected;
 
@@ -69,20 +69,10 @@ class _NavigationShell extends StatefulWidget {
   });
 
   @override
-  State<_NavigationShell> createState() => _NavigationShellState();
+  ConsumerState<_NavigationShell> createState() => _NavigationShellState();
 }
 
-class _NavigationShellState extends State<_NavigationShell> {
-  /// Quick Log opens as a full-screen modal route (AC-3).
-  void _openQuickLog(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const QuickLogScreen(),
-        fullscreenDialog: true, // AC-3: full-screen modal
-      ),
-    );
-  }
-
+class _NavigationShellState extends ConsumerState<_NavigationShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,13 +96,10 @@ class _NavigationShellState extends State<_NavigationShell> {
           ),
         ],
       ),
-      // AC-3: Quick Log FAB on Browse screen.
+      // AC-3 / P4ME-37: Conditional FAB on Browse screen.
+      // Show Quick Log when no restaurants exist; show Add Restaurant otherwise.
       floatingActionButton: widget.currentIndex == 0
-          ? FloatingActionButton(
-              onPressed: () => _openQuickLog(context),
-              tooltip: 'Quick Log',
-              child: const Icon(Icons.add),
-            )
+          ? _BrowseFab(context, ref)
           : null,
     );
   }
@@ -122,4 +109,45 @@ class _NavigationShellState extends State<_NavigationShell> {
     FavoritesScreen(),
     SettingsScreen(),
   ];
+}
+
+/// Conditional FAB for the Browse tab (P4ME-37 fix).
+/// Shows Quick Log when no restaurants exist; Add Restaurant otherwise.
+class _BrowseFab extends ConsumerWidget {
+  final BuildContext context;
+  final WidgetRef ref;
+
+  const _BrowseFab(this.context, this.ref);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final restaurantsAsync = ref.watch(restaurantDataProvider);
+    return restaurantsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => FloatingActionButton(
+        onPressed: () => _openQuickLog(context),
+        tooltip: 'Quick Log',
+        child: const Icon(Icons.add),
+      ),
+      data: (restaurants) {
+        final hasRestaurants = restaurants.isNotEmpty;
+        return FloatingActionButton(
+          onPressed: hasRestaurants
+              ? () => BrowseScreen.showAddRestaurantDialog(context, ref)
+              : () => _openQuickLog(context),
+          tooltip: hasRestaurants ? 'Add Restaurant' : 'Quick Log',
+          child: const Icon(Icons.add),
+        );
+      },
+    );
+  }
+
+  void _openQuickLog(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const QuickLogScreen(),
+        fullscreenDialog: true,
+      ),
+    );
+  }
 }
