@@ -2,8 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plated4me/application/providers/data_providers.dart';
-import 'package:plated4me/domain/entities/entities.dart';
 import 'package:plated4me/presentation/navigation/app_router.dart';
 import 'package:plated4me/presentation/screens/quick_log_screen.dart';
 
@@ -32,7 +30,7 @@ void main() {
     });
 
     testWidgets(
-      'Add Restaurant FAB shown when restaurants exist (default container)',
+      'Quick Log FAB shown on Browse tab',
       (tester) async {
         await tester.pumpWidget(
           UncontrolledProviderScope(
@@ -43,42 +41,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.byTooltip('Add Restaurant'),
-          findsOneWidget,
-          reason: 'FAB shows Add Restaurant when restaurants exist',
-        );
-      },
-    );
-
-    testWidgets(
-      'Quick Log FAB shown when no restaurants (empty container)',
-      (tester) async {
-        final emptyContainer = ProviderContainer(
-          overrides: [
-            userPreferencesDataProvider.overrideWith(() {
-              return _EmptyUserPrefsNotifier();
-            }),
-            restaurantDataProvider.overrideWith(() {
-              return _EmptyRestaurantNotifier();
-            }),
-          ],
-        );
-
-        await tester.pumpWidget(
-          UncontrolledProviderScope(
-            container: emptyContainer,
-            child: const MaterialApp(home: AppRouter()),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        expect(
           find.byTooltip('Quick Log'),
           findsOneWidget,
-          reason: 'FAB shows Quick Log when no restaurants exist',
+          reason: 'FAB shows Quick Log on Browse tab',
         );
-
-        emptyContainer.dispose();
       },
     );
 
@@ -202,24 +168,4 @@ void main() {
       );
     });
   });
-}
-
-/// Fake notifier for empty user preferences (onboarding complete).
-class _EmptyUserPrefsNotifier extends UserPreferencesDataProvider {
-  @override
-  Future<UserPreferences> build() => Future.value(
-    UserPreferences()..onboardingComplete = true,
-  );
-
-  @override
-  Future<void> refresh() async {}
-}
-
-/// Fake notifier for empty restaurant list.
-class _EmptyRestaurantNotifier extends RestaurantDataProvider {
-  @override
-  Future<List<Restaurant>> build() => Future.value([]);
-
-  @override
-  Future<void> refresh() async {}
 }

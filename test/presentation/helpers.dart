@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plated4me/application/providers/data_providers.dart';
+import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
 import 'package:plated4me/domain/entities/entities.dart';
 
 /// Default container override that provides a fake UserPreferences with onboarding complete.
@@ -17,6 +18,9 @@ ProviderContainer get defaultPrefsContainer => ProviderContainer(
       return _FakeRestaurantNotifier([
         Restaurant(name: 'Test Restaurant', address: '123 Main St'),
       ]);
+    }),
+    visitsListFilterProvider.overrideWith(() {
+      return _FakeVisitFilterNotifier([]);
     }),
   ],
 );
@@ -57,6 +61,18 @@ class _FakeRestaurantNotifier extends RestaurantDataProvider {
 
   @override
   Future<List<Restaurant>> build() => Future.value(_restaurants);
+
+  @override
+  Future<void> refresh() async {}
+}
+
+/// Fake notifier that returns a fixed list of filtered visits.
+class _FakeVisitFilterNotifier extends VisitListFilterNotifier {
+  final List<FilteredVisit> _visits;
+  _FakeVisitFilterNotifier(this._visits);
+
+  @override
+  Future<List<FilteredVisit>> build() async => _visits;
 
   @override
   Future<void> refresh() async {}
