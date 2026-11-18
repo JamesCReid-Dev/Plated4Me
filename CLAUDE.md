@@ -122,7 +122,7 @@ All generated files live alongside their source with `.g.dart`, `.freezed.dart`,
    - Sub-collections (one-to-many): use `@ignore` on List fields; query via Isar filters instead of embedding lists
    - Open database with `[RestaurantSchema, VisitSchema, ...]` in main.dart
 
-6. **Hive adapters** (fallback only):
+12. **Hive adapters** (fallback only):
    - Register all adapters in `main.dart` before `runApp()`
    - Hive key format: `"entity_type:{uuid}"` (e.g., `"item:{uuid}"`)
    - Use `Hive.initFlutter()` in `main()` before any UI renders
@@ -275,6 +275,14 @@ lib/
 
 These gates enforce strict ordering of operations. **NO code changes, file creation, or file edits are permitted until all preceding gates have been explicitly verified and passed.** Violating these gates is a process failure that must be corrected before proceeding.
 
+**⚠️ NO EXCEPTIONS — This rule applies to every request without exception:**
+- "Analyze this defect" → still requires Gates 0, 1, 2 (and 0.5 for defects) before any code changes
+- "Fix this bug quickly" → still requires all gates in order
+- "Review and resolve" → analysis is Gate 0/0.5; implementation cannot begin until Gates 0–2 are complete
+- Any request that mentions a Jira key or implies work on the codebase triggers the full gate sequence
+
+The only thing you may do before Gate 1 is **read existing code** for analysis purposes — but even then, Gate 2 (Jira initialization) must be completed before any file edits.
+
 ### Gate 0: Story Identification & Context
 
 Before touching any code, you MUST:
@@ -286,6 +294,39 @@ Before touching any code, you MUST:
 
 **GATE CHECK:** Confirm you have the correct Jira key, Story number, and acceptance criteria before proceeding. **DO NOT proceed to Gate 1 until this is complete.**
 
+### Gate 0.5: Defect Analysis (Defect Stories Only)
+
+This gate applies ONLY when the Jira story is marked as a defect — identified by either:
+- A `[Defect]` prefix in the summary/title, OR
+- A label of `Defect` on the issue
+
+Before any implementation work begins, you MUST perform a thorough root-cause analysis:
+
+1. **Reproduce the issue** — verify it exists in the current codebase by examining the relevant UI screens, providers, or storage logic.
+2. **Identify the root cause** — trace the bug to its origin (e.g., nested Scaffold collision, missing null check, incorrect provider state, stale data).
+3. **Determine validity** — confirm whether this is a genuine defect or if the behavior is intentional / out of scope.
+4. **Post analysis results as a Jira comment** in the required format:
+
+   ```
+   ## Defect Analysis — <JIRA_KEY>: <Summary>
+   - Valid Defect: ✅ Yes / ❌ No (not an issue)
+   - Root Cause: <brief description of what causes the bug>
+   - Impact: <user-facing impact assessment>
+   - Files Involved: lib/.../file1.dart, lib/.../file2.dart
+
+   ### Analysis Details
+   <detailed explanation of how the defect was identified and why it occurs>
+
+   **Status:** Ready for implementation (if valid) / Close as Not a Defect (if invalid).
+   ```
+
+5. **If NOT a valid defect**, post the analysis comment and recommend closing the issue. Do not proceed to Gate 1.
+12. **If VALID**, post the analysis comment and proceed through Gates 1 and 2 normally — create branch, push to remote, transition Jira to `In Progress`, assign artifact. Only then may implementation begin.
+
+> **Critical Rule:** Never begin implementation on a defect story without first posting a validated analysis comment AND completing all preceding gates (0 → 1 → 2). The analysis is Gate 0.5; it does NOT replace Gates 1 and 2. This ensures full traceability from Jira initialization through code changes to PR creation.
+
+**GATE CHECK:** Confirm defect analysis is posted as a Jira comment before proceeding. **DO NOT proceed to Gate 1 until this is complete.** (Skip for non-defect stories.)
+
 ### Gate 1: Branch Creation & Remote Push
 
 Before making ANY code changes, you MUST:
@@ -293,7 +334,7 @@ Before making ANY code changes, you MUST:
 2. Push the branch to remote origin with `git push -u origin <branch-name>`.
 3. Verify the branch exists on remote by running `git branch -r | grep <branch-name>`.
 
-**GATE CHECK:** Confirm the branch is created locally AND pushed to remote before proceeding. **DO NOT proceed to Gate 2 until this is complete.**
+**GATE CHECK:** Confirm the branch is created locally AND pushed to remote before proceeding. Post a brief Jira comment with the branch name and remote verification status. **DO NOT proceed to Gate 2 until this is complete.**
 
 ### Gate 2: Jira Initialization
 
@@ -344,7 +385,7 @@ Only after Gates 0, 1, 2, and 2.5 are passed may you begin implementing producti
 - After each test passes, run the full suite to ensure no existing tests break.
 - Verify every acceptance criterion has at least one passing test.
 
-**GATE CHECK:** Confirm all acceptance criteria are met and ALL tests (new + existing) pass before proceeding to Gate 4. **DO NOT proceed to Gate 4 until this is complete.**
+**GATE CHECK:** Confirm all acceptance criteria are met and ALL tests (new + existing) pass before proceeding to Gate 4. Post a brief Jira comment summarizing the Green Phase implementation (what was done to turn red tests green). **DO NOT proceed to Gate 4 until this is complete.**
 
 ### Gate 4: TDD Refactor Phase & Final Test Verification
 
@@ -370,7 +411,7 @@ After all TDD phases (Red → Green → Refactor) are complete and tests are pos
    - Any Refactor changes
    - The Jira comment with final test results
 
-**GATE CHECK:** Confirm PR is created and linked before considering the story complete.
+**GATE CHECK:** Confirm PR is created and linked before considering the story complete. Post a Jira comment with the PR link and review request info. **DO NOT proceed to Gate 5.5 until this is complete.**
 
 ### Gate 5.5: Rebase onto Latest Main (Pre-Merge)
 
@@ -384,7 +425,7 @@ Before merging the PR, you MUST ensure your branch is up-to-date with main to av
 
 > **Why this matters:** While you work on a feature branch, other PRs may be merged to main. Rebasing before merge ensures your changes sit cleanly on top of the latest code, making the squash-merge conflict-free. Pulling latest *before* branch creation is not sufficient — main continues advancing during development.
 
-**GATE CHECK:** Confirm branch is rebased onto latest main with no conflicts before proceeding to Gate 6. **DO NOT proceed until this is complete.**
+**GATE CHECK:** Confirm branch is rebased onto latest main with no conflicts before proceeding. Post a Jira comment confirming clean rebase and force-push. **DO NOT proceed until this is complete.**
 
 ---
 
@@ -460,12 +501,66 @@ If Jira is unavailable, use GitHub Projects/Issues as a temporary fallback:
 3. **Declare all return types explicitly** — required by analysis options.
 4. **Run `build_runner` after changes to annotated classes** — Isar, Freezed, Hive, JSON, Riverpod generators must be re-run.
 5. **No `print()` statements** — use proper logging if needed.
-6. **Never return `null` for `Future<T>` or `String`** — handle gracefully instead.
-7. **Use `const` constructors where possible** — Flutter performance best practice.
-8. **Keep widgets small and composable** — follow Flutter widget composition patterns.
-9. **Document public APIs with doc comments (`///`)** — especially entities, providers, and repository interfaces.
-10. **When in doubt, match existing code style** — refer to `lib/domain/entities/entities.dart` as a reference for entity conventions.
-11. **Follow TDD discipline** — tests must fail before implementation (Red), pass after implementation (Green), then clean up (Refactor). Never write production code without a failing test driving it.
+12. **Never return `null` for `Future<T>` or `String`** — handle gracefully instead.
+13. **Use `const` constructors where possible** — Flutter performance best practice.
+14. **Keep widgets small and composable** — follow Flutter widget composition patterns.
+15. **Document public APIs with doc comments (`///`)** — especially entities, providers, and repository interfaces.
+16. **When in doubt, match existing code style** — refer to `lib/domain/entities/entities.dart` as a reference for entity conventions.
+17. **Follow TDD discipline** — tests must fail before implementation (Red), pass after implementation (Green), then clean up (Refactor). Never write production code without a failing test driving it.
+
+---
+
+## Jira Comment Protocol — Phase-by-Phase Updates
+
+Every story (regular feature, defect fix, or task) MUST have its progress documented on the Jira issue via comments at each major phase transition. This ensures that if work is interrupted or handed off to another developer, they can read the comment history and immediately understand where things stand without re-reading the entire codebase.
+
+### Required Comment Points
+
+Every gate and phase MUST post a Jira comment upon completion. This ensures that if the process is interrupted (session terminated, connection lost, etc.), any subsequent agent or developer can read the Jira comments and immediately determine where work left off — no need to re-read code or guess state.
+
+**Rule:** At every Gate CHECK, before proceeding to the next gate, post a Jira comment summarizing what was just completed. Use `acli jira workitem comment create --key <KEY> --body "..."`. The comment should be brief but specific enough that another agent can pick up from here.
+
+| Phase | Action | Comment Content |
+|-------|--------|-----------------|
+| **Gate 0** | Story identified & context retrieved | `## Gate 0 — Story Identified` with Jira key, story number, summary, and acceptance criteria summary |
+| **Gate 1** | Branch created locally | Brief status: `Branch <branch-name> created locally` |
+| **Gate 1** | Branch pushed to remote | Brief status: `Branch <branch-name> pushed to remote origin — verified` |
+| **Gate 2** | Jira initialized (transitioned + assigned) | `## Gate 2 — Jira Initialized` with transition name used and assignee confirmation |
+| **Gate 0.5** | Defect analysis (defects only) | `## Gate 0.5 — Defect Analysis` with validity verdict, root cause, impact, files involved, and details |
+| **Gate 2.5** | Red Phase complete (all tests written & failing) | `## TDD Red Phase — Test Creation Complete` with test files, coverage matrix, failure output |
+| **Gate 3** | Green Phase complete (implementation done, all tests passing) | `## TDD Green Phase — Implementation Complete` with what was implemented to pass each red test |
+| **Gate 4** | Refactor + final test verification complete | `## Test Results — TDD Complete (Red → Green → Refactor)` with full output, AC matrix, phase summary |
+| **Gate 5** | PR created & linked | `## Gate 5 — PR Created` with PR link and review request info |
+| **Gate 5.5** | Rebase onto latest main complete | `## Gate 5.5 — Rebase onto Main` with confirmation of clean rebase and force-push |
+| **Phase 6a** | iOS build & deploy complete | `## Phase 6a — iOS Build & Deploy` with simulator model, build result, launch verification |
+| **Phase 6b** | Android build & deploy complete | `## Phase 6b — Android Build & Deploy` with emulator ID, build result, launch verification |
+
+### Defect-Specific Resolution Comment
+
+After resolving a defect (post-Gate 4, pre-Gate 5), post an additional resolution comment:
+
+```
+## Defect Resolution — <JIRA_KEY>: <Summary>
+- Root Cause: <what caused the bug>
+- Fix Applied: <which files changed and what was done>
+- Impact: <user-facing impact of the fix>
+- Test Results: X passed, Y failed (all passing)
+
+### Files Changed
+- lib/.../file1.dart — <brief description of change>
+- lib/.../file2.dart — <brief description of change>
+- test/.../test_file.dart — <brief description of test changes>
+
+**Status:** Resolution verified. Ready for In Review.
+```
+
+### Comment Format Guidelines
+
+- Use `##` headings with the gate number and phase name for easy scanning.
+- Include a **Status** line at the end indicating readiness for the next step.
+- Keep comments concise but informative — enough that another developer can pick up work without reading code.
+- Paste relevant test output snippets (not full logs unless under 20 lines).
+- Link to PRs, Confluence pages, or Figma designs where applicable.
 
 ---
 
@@ -589,30 +684,57 @@ This process defines the step-by-step workflow to follow when a story or task ha
 
 5. **Assign the Jira artifact** to the requestor/assignee unless a specific assignee was called out in the story description or comments. Use the same person for both the Jira assignment and the branch ownership.
 
+### Phase 2.5: Defect Analysis (Gate 2 → Gate 2.5 — Defects Only)
+
+This phase applies ONLY to stories marked as defects (`[Defect]` prefix in title or `Defect` label). Skip entirely for regular feature stories.
+
+12. **Reproduce the issue** — verify it exists by examining the relevant UI screens, providers, storage logic, or business rules described in the story.
+13. **Identify the root cause** — trace the bug to its origin (e.g., nested Scaffold collision, missing null check, incorrect provider state, stale data, race condition).
+14. **Determine validity** — confirm whether this is a genuine defect or if the behavior is intentional / out of scope / already fixed.
+15. **Post analysis results as a Jira comment** in the required format:
+
+   ```
+   ## Defect Analysis — <JIRA_KEY>: <Summary>
+   - Valid Defect: ✅ Yes / ❌ No (not an issue)
+   - Root Cause: <brief description of what causes the bug>
+   - Impact: <user-facing impact assessment>
+   - Files Involved: lib/.../file1.dart, lib/.../file2.dart
+
+   ### Analysis Details
+   <detailed explanation of how the defect was identified and why it occurs>
+
+   **Status:** Ready for implementation (if valid) / Close as Not a Defect (if invalid).
+   ```
+
+16. **If NOT a valid defect**, post the analysis comment and recommend closing the issue. Do not proceed to Phase 3.
+17. **If VALID**, complete Gates 1 (branch creation & push) and Gate 2 (Jira initialization: transition to `In Progress`, assign artifact), then proceed to Phase 3 (TDD Red Phase).
+
+> **Critical Rule:** Never begin implementation on a defect story without first posting a validated analysis comment AND completing all preceding gates (0 → 1 → 2 → 0.5). The analysis is Gate 0.5; it does NOT replace Gates 1 and 2. This ensures full traceability from Jira initialization through code changes to PR creation.
+
 ### Phase 3: TDD Red Phase — QA Test Creation (Gate 2 → Gate 2.5)
 
-6. **Review design documentation** for impacted changes:
+12. **Review design documentation** for impacted changes:
    - Check Confluence pages in the **"Plated4Me"** space if architecture, API specs, or user-facing docs are affected by this story
    - Check Figma designs if UI/UX changes are made
    - If NO design updates needed: note "No design changes required for this story" in Jira comments
 
-7. **Act as (or invoke) the QA Agent** to read the full story from Jira, including all acceptance criteria and design context.
+13. **Act as (or invoke) the QA Agent** to read the full story from Jira, including all acceptance criteria and design context.
 
-8. **Create a test plan** mapping each acceptance criterion to specific test cases across appropriate layers:
+14. **Create a test plan** mapping each acceptance criterion to specific test cases across appropriate layers:
    - Domain tests for entity logic and value objects
    - Application tests for providers and use cases
    - Presentation tests for widgets and UI behavior
    - Infrastructure tests for storage implementations
 
-9. **Write failing tests** for every acceptance criterion — these tests MUST fail when run because the production code does not yet exist:
+15. **Write failing tests** for every acceptance criterion — these tests MUST fail when run because the production code does not yet exist:
    - One test file per logical feature area, following existing naming patterns
    - Use `group()` to organize tests by entity/provider/widget
    - Include at least one negative/edge-case test per AC
    - Follow all project conventions (package imports, explicit return types, no print)
 
-10. **Verify ALL new tests FAIL** by running `flutter test` on the newly created files. Confirm each failure is genuine.
+16. **Verify ALL new tests FAIL** by running `flutter test` on the newly created files. Confirm each failure is genuine.
 
-11. **Post Red Phase results to Jira** as a comment:
+17. **Post Red Phase results to Jira** as a comment:
     ```
     ## TDD Red Phase — Test Creation Complete
     - Story: <JIRA_KEY>: <Summary>
@@ -639,15 +761,15 @@ This process defines the step-by-step workflow to follow when a story or task ha
 
 ### Phase 4: TDD Green & Refactor Phases — Implementation (Gate 2.5 → Gate 3 → Gate 4)
 
-12. **Green Phase:** Read the failing tests created in the Red Phase — they define "done." Implement ONLY enough production code to make those tests pass. No extra features, no scope expansion.
+18. **Green Phase:** Read the failing tests created in the Red Phase — they define "done." Implement ONLY enough production code to make those tests pass. No extra features, no scope expansion.
 
-13. **Verify each test turns green** as you implement. After each passing test, run the full suite to ensure no existing test breaks.
+19. **Verify each test turns green** as you implement. After each passing test, run the full suite to ensure no existing test breaks.
 
-14. **Refactor Phase (Rf):** With tests as a safety net, refactor production code to apply DRY, SRP, and Clean Architecture principles. Also clean up duplicated test setup. Run full suite after every change — all tests must continue passing. Refactoring is NOT adding features; if new functionality is needed, create a new story.
+20. **Refactor Phase (Rf):** With tests as a safety net, refactor production code to apply DRY, SRP, and Clean Architecture principles. Also clean up duplicated test setup. Run full suite after every change — all tests must continue passing. Refactoring is NOT adding features; if new functionality is needed, create a new story.
 
-15. **Execute final `flutter test`** and ensure ALL tests pass (new + existing + refactored).
+21. **Execute final `flutter test`** and ensure ALL tests pass (new + existing + refactored).
 
-16. **Post final test results to Jira** as a comment:
+22. **Post final test results to Jira** as a comment:
     ```
     ## Test Results — TDD Complete (Red → Green → Refactor)
     - Total tests: X
@@ -674,16 +796,33 @@ This process defines the step-by-step workflow to follow when a story or task ha
     | 2    | ✅ Met | test_<name>.dart |
     ```
 
-17. **Only after ALL tests pass and results are posted as a Jira comment, transition to In Review.**
+17. **Defect Resolution Comment (defects only):** If this is a defect story, post a resolution comment before transitioning:
+
+   ```
+   ## Defect Resolution — <JIRA_KEY>: <Summary>
+   - Root Cause: <what caused the bug>
+   - Fix Applied: <which files changed and what was done>
+   - Impact: <user-facing impact of the fix>
+   - Test Results: X passed, Y failed (all passing)
+
+   ### Files Changed
+   - lib/.../file1.dart — <brief description of change>
+   - lib/.../file2.dart — <brief description of change>
+   - test/.../test_file.dart — <brief description of test changes>
+
+   **Status:** Resolution verified. Ready for In Review.
+   ```
+
+18. **Only after ALL tests pass and results are posted as a Jira comment, transition to In Review.**
 
 ### Phase 5: Code Review & Pull Request (Gate 4 → Gate 5)
 
-18. **Update the Jira artifact status to `In Review`** once implementation is complete and all acceptance criteria are met.
+19. **Update the Jira artifact status to `In Review`** once implementation is complete and all acceptance criteria are met.
     ```bash
     acli jira workitem transition --key <KEY> --status "In Review"
     ```
 
-19. **Stage and commit all changed files** with a commit message following this pattern:
+20. **Stage and commit all changed files** with a commit message following this pattern:
     ```
     <jira-artifact-id>-<status>
     ```
@@ -692,19 +831,19 @@ This process defines the step-by-step workflow to follow when a story or task ha
 
     **Example:** `P4ME-15-dev-complete` or `P4ME-99-bugfix-resolved`
 
-20. **Push all committed files to the remote origin repository:**
+21. **Push all committed files to the remote origin repository:**
     ```bash
     git push origin <branch-name>
     ```
 
-21. **Rebase onto latest main (Gate 5.5):** Before creating the PR, ensure your branch is up-to-date:
+22. **Rebase onto latest main (Gate 5.5):** Before creating the PR, ensure your branch is up-to-date:
     ```bash
     git fetch origin main
     git rebase origin/main   # resolve conflicts if any, then: git add + git rebase --continue
     git push --force-with-lease origin <branch-name>
     ```
 
-22. **Create a Pull Request (PR)** from the feature branch to the target branch (typically `main` or `develop`):
+23. **Create a Pull Request (PR)** from the feature branch to the target branch (typically `main` or `develop`):
     - Link the PR to the Jira artifact in the PR description
     - Include a summary of TDD phases completed, test results, and any notes for reviewers
     - Reference impacted Confluence pages or Figma designs where applicable
@@ -718,27 +857,27 @@ After the PR is created and merged (or if deploying directly from the feature br
 
 #### 5a. iOS — Build, Deploy & Run in Simulator
 
-23. **Identify an available iPhone simulator** (prefer the latest model):
+24. **Identify an available iPhone simulator** (prefer the latest model):
    ```bash
    xcrun simctl list devices available | grep -i iphone
    ```
 
-24. **Boot the selected iPhone simulator:**
+25. **Boot the selected iPhone simulator:**
    ```bash
    xcrun simctl boot "<iPhone Model>"
    ```
 
-25. **Ensure dependencies are up to date:**
+26. **Ensure dependencies are up to date:**
    ```bash
    flutter pub get
    ```
 
-26. **Build and deploy to the iOS simulator (debug mode):**
+27. **Build and deploy to the iOS simulator (debug mode):**
    ```bash
    flutter run -d "<iPhone Model>"
    ```
 
-27. **Bring the Simulator window to the foreground** so the app is visible:
+28. **Bring the Simulator window to the foreground** so the app is visible:
    ```bash
    open -a "Simulator" 2>/dev/null || osascript -e 'tell application "Simulator" to activate' 2>/dev/null
    ```
@@ -748,41 +887,41 @@ After the PR is created and merged (or if deploying directly from the feature br
    ps aux | grep -i "[S]imulator" | head -5
    ```
 
-28. **Verify the app launches** in the simulator — check for errors in the console output.
+29. **Verify the app launches** in the simulator — check for errors in the console output.
 
-29. **Stop the flutter run process** cleanly:
+30. **Stop the flutter run process** cleanly:
    ```bash
    pkill -f "flutter run" 2>/dev/null; sleep 1
    ```
 
-#### 5b. Android — Build, Deploy & Run in Emulator
+#### 6b. Android — Build, Deploy & Run in Emulator
 
-30. **List available Android virtual devices (AVDs):**
+31. **List available Android virtual devices (AVDs):**
    ```bash
    avdmanager list avd
    # or: flutter emulators --launch <emulator-id>
    ```
 
-31. **Launch the Android emulator:**
+32. **Launch the Android emulator:**
    ```bash
    flutter emulators --launch <emulator-id>
    # Wait for it to boot (check with: adb devices)
    sleep 30
    ```
 
-32. **Ensure dependencies are up to date:**
+33. **Ensure dependencies are up to date:**
    ```bash
    flutter pub get
    ```
 
-33. **Build and deploy to the Android emulator:**
+34. **Build and deploy to the Android emulator:**
    ```bash
    flutter run -d <emulator-id>
    ```
 
-34. **Verify the app launches** in the emulator — check for errors in the console output.
+35. **Verify the app launches** in the emulator — check for errors in the console output.
 
-35. **Stop the flutter run process** cleanly:
+36. **Stop the flutter run process** cleanly:
    ```bash
    pkill -f "flutter run" 2>/dev/null; sleep 1
    ```
@@ -795,12 +934,17 @@ After the PR is created and merged (or if deploying directly from the feature br
 | Step | Action | Done? | Gate |
 |------|--------|-------|------|
 | 0 | Identify Jira key, Story number, and acceptance criteria | ☐ | Gate 0 |
+| 0b | Post Gate 0 comment to Jira (story identified) | ☐ | Gate 0 |
 | 1 | Create branch: `<owner>-<phase>-STORY###` (use Story number, NOT Jira key) | ☐ | Gate 1 |
-| 2 | Push branch to remote origin | ☐ | Gate 1 |
-| 3 | Checkout and set active branch | ☐ | Gate 1 |
-| 4 | Transition Jira issue to In Progress: `acli jira workitem transition --key <KEY> --status "In Progress"` | ☐ | Gate 2 |
-| 5 | Verify issue appears in correct swimlane/column on sprint board | ☐ | Gate 2 |
-| 6 | Assign Jira artifact: `acli jira workitem assign --key <KEY> --assignee "@me"` | ☐ | Gate 2 |
+| 1a | Push branch to remote origin | ☐ | Gate 1 |
+| 1b | Verify branch on remote (`git branch -r \| grep <branch-name>`) | ☐ | Gate 1 |
+| 1c | Post Gate 1 comment to Jira (branch name + remote verified) | ☐ | Gate 1 |
+| 2 | Checkout and set active branch | ☐ | Gate 1 |
+| 3 | Transition Jira issue to In Progress: `acli jira workitem transition --key <KEY> --status "In Progress"` | ☐ | Gate 2 |
+| 4 | Verify issue appears in correct swimlane/column on sprint board | ☐ | Gate 2 |
+| 5 | Assign Jira artifact: `acli jira workitem assign --key <KEY> --assignee "@me"` | ☐ | Gate 2 |
+| 6 | Post Gate 2 comment to Jira (transition + assignee confirmed) | ☐ | Gate 2 |
+| **GATE 0.5** | Defect analysis (defects only): reproduce, root cause, validity verdict → post as Jira comment | ☐ | Gate 0.5 |
 | **GATE 1 & 2 PASSED — Red Phase may begin** | | | |
 | 7 | Review design docs (Confluence/Figma) — if no changes needed, note "No design changes required" in Jira | ☐ | Gate 2.5 |
 | 8 | QA Agent reads story from Jira and creates test plan mapping AC → tests | ☐ | Gate 2.5 |
@@ -808,18 +952,22 @@ After the PR is created and merged (or if deploying directly from the feature br
 | 10 | Verify ALL new tests FAIL with `flutter test` | ☐ | Gate 2.5 |
 | 11 | Post Red Phase results to Jira comment (files, coverage matrix, failure output) | ☐ | Gate 2.5 |
 | **GATE 2.5 PASSED — Green Phase may begin** | | | |
-| 12 | Read failing tests from QA — they define "done" | ☐ | Gate 3 |
-| 13 | Implement ONLY enough code to make red tests pass (Green Phase) | ☐ | Gate 3 |
-| 14 | Refactor production and test code with safety net of passing tests (Refactor Phase) | ☐ | Gate 4 |
-| 15 | Run `flutter test` — ensure ALL tests (new + existing) pass | ☐ | Gate 4 |
-| 16 | Post final TDD results to Jira comment (Red/Green/Refactor summary, full output, AC matrix) | ☐ | Gate 4 |
+| 10 | Read failing tests from QA — they define "done" | ☐ | Gate 3 |
+| 11 | Implement ONLY enough code to make red tests pass (Green Phase) | ☐ | Gate 3 |
+| 12 | Post Green Phase comment to Jira (what was implemented) | ☐ | Gate 3 |
+| 13 | Refactor production and test code with safety net of passing tests (Refactor Phase) | ☐ | Gate 4 |
+| 14 | Run `flutter test` — ensure ALL tests (new + existing) pass | ☐ | Gate 4 |
+| 15 | Post final TDD results to Jira comment (Red/Green/Refactor summary, full output, AC matrix) | ☐ | Gate 4 |
 | **GATE 4 PASSED — Status transition now permitted** | | | |
-| 17 | Only after tests posted: Transition Jira status to In Review (`acli jira workitem transition --key <KEY> --status "In Review"`) | ☐ | Gate 5 |
-| 18 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
-| 19 | Push changes to remote origin | ☐ | Gate 5 |
-| 20 | Rebase onto latest main (`git fetch origin main && git rebase origin/main`) | ☐ | Gate 5.5 |
-| 21 | Force-push rebased branch (`git push --force-with-lease`) | ☐ | Gate 5.5 |
-| 22 | Create Pull Request referencing TDD phases and Jira test results | ☐ | Gate 5 |
+| 16 | Only after tests posted: Transition Jira status to In Review (`acli jira workitem transition --key <KEY> --status "In Review"`) | ☐ | Gate 5 |
+| **GATE 0.5** | Defect resolution comment (defects only): root cause, fix applied, files changed → post as Jira comment | ☐ | Gate 4 |
+| 17 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
+| 18 | Push changes to remote origin | ☐ | Gate 5 |
+| 19 | Create Pull Request referencing TDD phases and Jira test results | ☐ | Gate 5 |
+| 20 | Post PR comment to Jira (PR link + review request) | ☐ | Gate 5 |
+| 21 | Rebase onto latest main (`git fetch origin main && git rebase origin/main`) | ☐ | Gate 5.5 |
+| 22 | Force-push rebased branch (`git push --force-with-lease`) | ☐ | Gate 5.5 |
+| 23 | Post rebase comment to Jira (clean rebase confirmed) | ☐ | Gate 5.5 |
 | **GATE 5 PASSED — Build & Deploy now permitted** | | | |
 | 15a | iOS: Boot iPhone simulator → `flutter pub get` → `flutter run -d "<iPhone>"` → verify launch → stop | ☐ | Phase 6 |
 | 15b | Android: Launch AVD emulator → `flutter pub get` → `flutter run -d <emulator>` → verify launch → stop | ☐ | Phase 6 |

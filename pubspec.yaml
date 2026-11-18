@@ -31,9 +31,5 @@ dev_dependencies:
   isar_generator: ^3.1.0+1
   mocktail: ^1.0.4
 
-dependency_overrides:
-  isar_flutter_libs:
-    path: packages/isar_flutter_libs
-
 flutter:
   uses-material-design: true
