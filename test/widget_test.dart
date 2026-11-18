@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plated4me/application/providers/data_providers.dart';
+import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
 import 'package:plated4me/domain/entities/entities.dart';
 import 'package:plated4me/main.dart';
 
@@ -15,6 +16,7 @@ void main() {
           () => _FakeUserPrefsNotifier(),
         ),
         restaurantDataProvider.overrideWith(() => _FakeRestaurantNotifier()),
+        visitsListFilterProvider.overrideWith(() => _FakeVisitFilterNotifier()),
       ],
     );
 
@@ -38,7 +40,8 @@ void main() {
     expect(bottomNav.items[2].label, 'Settings');
 
     // The initial page is the Browse screen (P4ME-25: 3 tabs = Browse, Favorites, Settings).
-    expect(find.text('Browse Restaurants'), findsOneWidget);
+    // P4ME-17: BrowseScreen now shows visit history with "Visit History" title.
+    expect(find.text('Visit History'), findsOneWidget);
   });
 }
 
@@ -56,6 +59,15 @@ class _FakeUserPrefsNotifier extends UserPreferencesDataProvider {
 class _FakeRestaurantNotifier extends RestaurantDataProvider {
   @override
   Future<List<Restaurant>> build() => Future.value([]);
+
+  @override
+  Future<void> refresh() async {}
+}
+
+/// Fake notifier that returns an empty filtered visit list.
+class _FakeVisitFilterNotifier extends VisitListFilterNotifier {
+  @override
+  Future<List<FilteredVisit>> build() async => [];
 
   @override
   Future<void> refresh() async {}

@@ -96,10 +96,13 @@ class _NavigationShellState extends ConsumerState<_NavigationShell> {
           ),
         ],
       ),
-      // AC-3 / P4ME-37: Conditional FAB on Browse screen.
-      // Show Quick Log when no restaurants exist; show Add Restaurant otherwise.
+      // AC-10: Quick Log FAB on Browse tab.
       floatingActionButton: widget.currentIndex == 0
-          ? _BrowseFab(context, ref)
+          ? FloatingActionButton(
+              onPressed: () => _openQuickLog(context),
+              tooltip: 'Quick Log',
+              child: const Icon(Icons.add),
+            )
           : null,
     );
   }
@@ -111,43 +114,12 @@ class _NavigationShellState extends ConsumerState<_NavigationShell> {
   ];
 }
 
-/// Conditional FAB for the Browse tab (P4ME-37 fix).
-/// Shows Quick Log when no restaurants exist; Add Restaurant otherwise.
-class _BrowseFab extends ConsumerWidget {
-  final BuildContext context;
-  final WidgetRef ref;
-
-  const _BrowseFab(this.context, this.ref);
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final restaurantsAsync = ref.watch(restaurantDataProvider);
-    return restaurantsAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => FloatingActionButton(
-        onPressed: () => _openQuickLog(context),
-        tooltip: 'Quick Log',
-        child: const Icon(Icons.add),
-      ),
-      data: (restaurants) {
-        final hasRestaurants = restaurants.isNotEmpty;
-        return FloatingActionButton(
-          onPressed: hasRestaurants
-              ? () => BrowseScreen.showAddRestaurantDialog(context, ref)
-              : () => _openQuickLog(context),
-          tooltip: hasRestaurants ? 'Add Restaurant' : 'Quick Log',
-          child: const Icon(Icons.add),
-        );
-      },
-    );
-  }
-
-  void _openQuickLog(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const QuickLogScreen(),
-        fullscreenDialog: true,
-      ),
-    );
-  }
+/// Opens the Quick Log screen as a full-screen modal.
+void _openQuickLog(BuildContext context) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => const QuickLogScreen(),
+      fullscreenDialog: true,
+    ),
+  );
 }
