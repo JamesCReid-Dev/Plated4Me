@@ -36,6 +36,23 @@ If `--labels` is not supported by the CLI, add a comment to the story noting it 
 4. Run full suite before committing: `flutter test`
 5. Check analyzer: `flutter analyze` — fix any new issues
 
+### Story Implementation Gates
+
+**Gate 0 → 1:** Create branch `<owner>-<phase>-STORY###`, push to remote
+**Gate 2:** Transition Jira to `In Progress`, assign to self
+**Gate 2.5 (Red):** Write failing tests for every AC, verify all fail, post results to Jira
+**Gate 3 (Green):** Implement ONLY enough code to make red tests pass
+**Gate 4 (Refactor):** Clean up code + tests, run full suite, post final results to Jira
+
+> **⚠️ CRITICAL — Gate 5 Status Transition:** After posting test results to Jira, the VERY FIRST step of Gate 5 is to transition the Jira issue to `In Review` BEFORE any git operations:
+> ```bash
+> acli jira workitem transition --key <KEY> --status "In Review"
+> ```
+> **Never skip this step.** The story must be in "In Review" before committing, pushing, or creating a PR.
+
+**Gate 5:** Transition to `In Review` → commit/push → create PR
+**Gate 5.5:** Rebase onto latest main (resolve conflicts locally)
+
 ## Flutter Commands
 
 - **Run on device:** `flutter run -d <device-id>` or `flutter run` (auto-detect)

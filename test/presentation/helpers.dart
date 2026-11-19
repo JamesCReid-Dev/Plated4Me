@@ -10,12 +10,12 @@ import 'package:plated4me/domain/entities/entities.dart';
 ProviderContainer get defaultPrefsContainer => ProviderContainer(
   overrides: [
     userPreferencesDataProvider.overrideWith(() {
-      return _FakeUserPrefsNotifier(
+      return FakeUserPrefsNotifier(
         UserPreferences()..onboardingComplete = true,
       );
     }),
     restaurantDataProvider.overrideWith(() {
-      return _FakeRestaurantNotifier([
+      return FakeRestaurantNotifier([
         Restaurant(name: 'Test Restaurant', address: '123 Main St'),
       ]);
     }),
@@ -29,7 +29,7 @@ ProviderContainer get defaultPrefsContainer => ProviderContainer(
 ProviderContainer get incompleteOnboardingContainer => ProviderContainer(
   overrides: [
     userPreferencesDataProvider.overrideWith(() {
-      return _FakeUserPrefsNotifier(
+      return FakeUserPrefsNotifier(
         UserPreferences()..onboardingComplete = false,
       );
     }),
@@ -37,9 +37,9 @@ ProviderContainer get incompleteOnboardingContainer => ProviderContainer(
 );
 
 /// Fake notifier that returns a fixed UserPreferences value.
-class _FakeUserPrefsNotifier extends UserPreferencesDataProvider {
+class FakeUserPrefsNotifier extends UserPreferencesDataProvider {
   final UserPreferences _prefs;
-  _FakeUserPrefsNotifier(this._prefs);
+  FakeUserPrefsNotifier(this._prefs);
 
   @override
   Future<UserPreferences> build() => Future.value(_prefs);
@@ -55,9 +55,9 @@ class _FakeUserPrefsNotifier extends UserPreferencesDataProvider {
 }
 
 /// Fake notifier that returns a fixed list of restaurants.
-class _FakeRestaurantNotifier extends RestaurantDataProvider {
+class FakeRestaurantNotifier extends RestaurantDataProvider {
   final List<Restaurant> _restaurants;
-  _FakeRestaurantNotifier(this._restaurants);
+  FakeRestaurantNotifier(this._restaurants);
 
   @override
   Future<List<Restaurant>> build() => Future.value(_restaurants);

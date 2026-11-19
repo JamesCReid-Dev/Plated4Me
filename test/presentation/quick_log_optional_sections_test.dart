@@ -6,10 +6,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plated4me/application/providers/data_providers.dart';
 import 'package:plated4me/application/providers/quick_log_form_provider.dart';
+import 'package:plated4me/domain/entities/entities.dart';
 import 'package:plated4me/presentation/screens/quick_log_screen.dart';
 
 import 'helpers.dart';
+
+// -- Fake save notifier for tests that tap the save button ----------------------
+
+/// Minimal fake VisitDataProvider that completes saveVisit synchronously.
+class _FakeSaveNotifier extends VisitDataProvider {
+  @override
+  Future<List<Visit>> fetchAll() async => [];
+
+  @override
+  Future<void> refresh() async {}
+
+  @override
+  Future<void> saveVisit(Visit visit) async {
+    state = AsyncData(await fetchAll());
+  }
+}
 
 void main() {
   group('P4ME-16 — AC-1: Five accordion sections present', () {
@@ -183,9 +201,26 @@ void main() {
     testWidgets(
       'tapping save pops the navigator after setting only ratings',
       (tester) async {
+        // Override visitsDataProvider so saveVisit completes synchronously.
+        final container = ProviderContainer(
+          overrides: [
+            userPreferencesDataProvider.overrideWith(() {
+              return FakeUserPrefsNotifier(
+                UserPreferences()..onboardingComplete = true,
+              );
+            }),
+            restaurantDataProvider.overrideWith(() {
+              return FakeRestaurantNotifier([
+                Restaurant(name: 'Test Restaurant', address: '123 Main St'),
+              ]);
+            }),
+            visitsDataProvider.overrideWith((_) => _FakeSaveNotifier()),
+          ],
+        );
+
         await tester.pumpWidget(
           UncontrolledProviderScope(
-            container: defaultPrefsContainer,
+            container: container,
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
               home: Scaffold(
