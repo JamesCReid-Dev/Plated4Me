@@ -361,7 +361,10 @@ Before transitioning the issue status, you MUST complete both the Refactor Phase
 ### Gate 5: Commit, Push & PR (Post-TDD)
 
 After all TDD phases (Red → Green → Refactor) are complete and tests are posted:
-1. Transition the Jira issue status (e.g., to `In Review`).
+1. **Transition the Jira issue status to `In Review`** — this MUST be done before committing/pushing/creating a PR.
+   ```bash
+   acli jira workitem transition --key <KEY> --status "In Review"
+   ```
 2. Stage and commit with message `<jira-id>-<status>`. Include a summary of which TDD phase each commit represents if multiple commits are made.
 3. Push to remote origin.
 4. Create a Pull Request linking to the Jira artifact, referencing:
@@ -370,7 +373,7 @@ After all TDD phases (Red → Green → Refactor) are complete and tests are pos
    - Any Refactor changes
    - The Jira comment with final test results
 
-**GATE CHECK:** Confirm PR is created and linked before considering the story complete.
+**GATE CHECK:** Confirm PR is created and linked before considering the story complete. **The issue must be in "In Review" status before this gate passes.**
 
 ### Gate 5.5: Rebase onto Latest Main (Pre-Merge)
 
@@ -678,10 +681,11 @@ This process defines the step-by-step workflow to follow when a story or task ha
 
 ### Phase 5: Code Review & Pull Request (Gate 4 → Gate 5)
 
-18. **Update the Jira artifact status to `In Review`** once implementation is complete and all acceptance criteria are met.
+18. **Update the Jira artifact status to `In Review`** — this is the FIRST step of Gate 5, done BEFORE commit/push/PR.
     ```bash
     acli jira workitem transition --key <KEY> --status "In Review"
     ```
+    > **⚠️ CRITICAL:** This status transition MUST happen before any git operations (commit, push, PR). If you forget this step, the story will remain stuck in "In Progress" even after all code is complete. Always do this as your very first action when entering Gate 5.
 
 19. **Stage and commit all changed files** with a commit message following this pattern:
     ```
@@ -814,7 +818,7 @@ After the PR is created and merged (or if deploying directly from the feature br
 | 15 | Run `flutter test` — ensure ALL tests (new + existing) pass | ☐ | Gate 4 |
 | 16 | Post final TDD results to Jira comment (Red/Green/Refactor summary, full output, AC matrix) | ☐ | Gate 4 |
 | **GATE 4 PASSED — Status transition now permitted** | | | |
-| 17 | Only after tests posted: Transition Jira status to In Review (`acli jira workitem transition --key <KEY> --status "In Review"`) | ☐ | Gate 5 |
+| 17 | ⚠️ FIRST STEP: Transition Jira status to In Review (`acli jira workitem transition --key <KEY> --status "In Review"`) — MUST happen before commit/push/PR | ☐ | Gate 5 |
 | 18 | Commit with message: `<jira-id>-<status>` | ☐ | Gate 5 |
 | 19 | Push changes to remote origin | ☐ | Gate 5 |
 | 20 | Rebase onto latest main (`git fetch origin main && git rebase origin/main`) | ☐ | Gate 5.5 |
