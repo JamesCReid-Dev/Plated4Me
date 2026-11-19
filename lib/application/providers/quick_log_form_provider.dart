@@ -96,6 +96,11 @@ class QuickLogFormNotifier extends StateNotifier<QuickLogFormData> {
 
   QuickLogFormNotifier() : super(QuickLogFormData());
 
+  /// Resets all form data to default empty state with fresh controllers.
+  void reset() {
+    state = QuickLogFormData();
+  }
+
   /// Toggles the expanded state of accordion section at [index].
   void toggleAccordion(int index) {
     if (index >= 0 && index < state.expanded.length) {

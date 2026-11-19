@@ -1,7 +1,11 @@
 /// App router — bottom nav shell with IndexedStack, onboarding gate, and Quick Log modal.
+/// P4ME-44: Resets rating + form providers before opening QuickLog to prevent
+/// stale data from persisting across opens.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plated4me/application/providers/data_providers.dart';
+import 'package:plated4me/application/providers/quick_log_form_provider.dart';
+import 'package:plated4me/application/providers/visit_rating_provider.dart';
 import 'package:plated4me/presentation/screens/browse_screen.dart';
 import 'package:plated4me/presentation/screens/favorites_screen.dart';
 import 'package:plated4me/presentation/screens/onboarding_screen.dart';
@@ -99,7 +103,7 @@ class _NavigationShellState extends ConsumerState<_NavigationShell> {
       // AC-10: Quick Log FAB on Browse tab.
       floatingActionButton: widget.currentIndex == 0
           ? FloatingActionButton(
-              onPressed: () => _openQuickLog(context),
+              onPressed: () => openQuickLog(context),
               tooltip: 'Quick Log',
               child: const Icon(Icons.add),
             )
@@ -115,7 +119,15 @@ class _NavigationShellState extends ConsumerState<_NavigationShell> {
 }
 
 /// Opens the Quick Log screen as a full-screen modal.
-void _openQuickLog(BuildContext context) {
+/// P4ME-44: Resets visit rating and form providers before opening to ensure
+/// all fields start in their default empty state.
+void openQuickLog(BuildContext context) {
+  // Reset provider state so stale data from previous QuickLog sessions
+  // does not leak into the new session (P4ME-44).
+  final container = ProviderScope.containerOf(context);
+  container.read(visitRatingProvider.notifier).reset();
+  container.read(quickLogFormProvider.notifier).reset();
+
   Navigator.of(context).push(
     MaterialPageRoute<void>(
       builder: (_) => const QuickLogScreen(),
