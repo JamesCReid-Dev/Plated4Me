@@ -59,7 +59,7 @@ class _OnboardingGate extends ConsumerWidget {
 }
 
 /// Navigation shell — IndexedStack with BottomNavigationBar and Quick Log FAB.
-class _NavigationShell extends StatefulWidget {
+class _NavigationShell extends ConsumerStatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onPageSelected;
 
@@ -69,20 +69,10 @@ class _NavigationShell extends StatefulWidget {
   });
 
   @override
-  State<_NavigationShell> createState() => _NavigationShellState();
+  ConsumerState<_NavigationShell> createState() => _NavigationShellState();
 }
 
-class _NavigationShellState extends State<_NavigationShell> {
-  /// Quick Log opens as a full-screen modal route (AC-3).
-  void _openQuickLog(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const QuickLogScreen(),
-        fullscreenDialog: true, // AC-3: full-screen modal
-      ),
-    );
-  }
-
+class _NavigationShellState extends ConsumerState<_NavigationShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,7 +96,7 @@ class _NavigationShellState extends State<_NavigationShell> {
           ),
         ],
       ),
-      // AC-3: Quick Log FAB on Browse screen.
+      // AC-10: Quick Log FAB on Browse tab.
       floatingActionButton: widget.currentIndex == 0
           ? FloatingActionButton(
               onPressed: () => _openQuickLog(context),
@@ -122,4 +112,14 @@ class _NavigationShellState extends State<_NavigationShell> {
     FavoritesScreen(),
     SettingsScreen(),
   ];
+}
+
+/// Opens the Quick Log screen as a full-screen modal.
+void _openQuickLog(BuildContext context) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => const QuickLogScreen(),
+      fullscreenDialog: true,
+    ),
+  );
 }

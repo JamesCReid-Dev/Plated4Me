@@ -30,7 +30,7 @@ void main() {
     });
 
     testWidgets(
-      'Quick Log entry point (FAB with tooltip "Quick Log") exists on Browse screen',
+      'Quick Log FAB shown on Browse tab',
       (tester) async {
         await tester.pumpWidget(
           UncontrolledProviderScope(
@@ -42,8 +42,8 @@ void main() {
 
         expect(
           find.byTooltip('Quick Log'),
-          findsWidgets,
-          reason: 'AC-3: Quick Log entry point (FAB) present',
+          findsOneWidget,
+          reason: 'FAB shows Quick Log on Browse tab',
         );
       },
     );
