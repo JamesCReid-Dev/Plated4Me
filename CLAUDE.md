@@ -38,9 +38,15 @@ If `--labels` is not supported by the CLI, add a comment to the story noting it 
 
 ### Story Implementation Gates
 
-**Gate 0 → 1:** Create branch `<owner>-<phase>-STORY###`, push to remote
-**Gate 2:** Transition Jira to `In Progress`, assign to self
-**Gate 2.5 (Red):** Write failing tests for every AC, verify all fail, post results to Jira
+Gates MUST be followed in strict order. Each gate's prerequisites must be complete before proceeding. **NO code, test, or implementation changes are allowed until after Gate 1 completes.**
+
+**Gate 0:** Create branch `<owner>-<phase>-STORY###`, push to remote
+**Gate 1 (In Progress):** Transition Jira to `In Progress`, assign to self — **MUST complete before ANY test writing, code changes, or implementation work**
+**Gate 1.5 (Defect Verification only):** For defect stories: reproduce the issue, confirm root cause, document findings — still NO code changes
+
+> **🚫 VIOLATION CHECK:** Before writing any test or code, verify Jira status is `In Progress`. If it is not, transition it first. Working on a story while it remains in `To Do` is a process violation.
+
+**Gate 2 (Red):** Write failing tests for every AC, verify all fail, post results to Jira
 **Gate 3 (Green):** Implement ONLY enough code to make red tests pass
 **Gate 4 (Refactor):** Clean up code + tests, run full suite, post final results to Jira
 
@@ -60,6 +66,7 @@ If `--labels` is not supported by the CLI, add a comment to the story noting it 
 - **Tests:** `flutter test`
 - **Analyze:** `flutter analyze`
 - **iOS simulator:** `xcrun simctl list devices available` then `xcrun simctl boot "<name>"`
+
 
 ## Android USB-C Deployment
 
