@@ -205,8 +205,34 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
     }
   }
 
-  void _handleSave() {
-    // TODO: Save visit to repository (next story iteration).
+  Future<void> _handleSave() async {
+    final state = ref.read(visitRatingProvider);
+    final form = ref.read(quickLogFormProvider);
+
+    final employeeNameText = form.employeeNameController?.text.trim();
+    final generalNotesText = form.generalNotesController?.text.trim();
+
+    final visit = Visit(
+      restaurantId: 0,
+      foodRating: state.foodRating,
+      valueRating: state.valueRating,
+      serviceRating: state.serviceRating,
+      overallRating: state.overallRating,
+      compositeScore: state.compositeScore ?? 0.0,
+      returnIntent: state.returnIntent ?? false,
+    )..mealTotal = form.mealTotal
+     ..tipPercent = form.tipPercent
+     ..employeeName = (employeeNameText == null || employeeNameText.isEmpty)
+         ? null
+         : employeeNameText
+     ..generalNotes = (generalNotesText == null || generalNotesText.isEmpty)
+         ? null
+         : generalNotesText
+     ..lineItems = List<VisitLineItem>.from(form.lineItems)
+     ..journalEntries = List<JournalEntry>.from(form.journalEntries);
+
+    await ref.read(visitsDataProvider.notifier).saveVisit(visit);
+
     if (mounted) {
       Navigator.of(context).pop();
     }
