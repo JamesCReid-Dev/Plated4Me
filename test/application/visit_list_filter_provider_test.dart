@@ -491,5 +491,87 @@ void main() {
         container.dispose();
       },
     );
+
+    // P4ME-43: Visits with no matching restaurant (restaurantId=0) must still appear in Browse.
+    test(
+      'P4ME-43 — visits without a matching restaurant are included in browse results',
+      () async {
+        final mockVisitRepo = _MockVisitRepository();
+        final mockRestaurantRepo = _MockRestaurantRepository();
+
+        // Save a visit with restaurantId=0 (as QuickLog does).
+        await mockVisitRepo.saveVisit(_makeVisit(
+          restaurantId: 0,
+          compositeScore: 80.0,
+          createdAt: DateTime(2025, 6, 1),
+          id: 10,
+        ));
+
+        // No restaurants in the system — this simulates the real-world case where
+        // QuickLog creates visits with restaurantId=0 but no Restaurant record exists.
+        final container = ProviderContainer(overrides: [
+          visitsListFilterProvider.overrideWith(() => VisitListFilterNotifier.withRepos(mockVisitRepo, mockRestaurantRepo)),
+        ]);
+
+        await container.read(visitsListFilterProvider.future);
+        final state = container.read(visitsListFilterProvider);
+
+        expect(state, isA<AsyncData<List<FilteredVisit>>>());
+        final visits = (state as AsyncData).value;
+        // BUG: Currently returns 0 because _buildFilteredResult drops visits with no matching restaurant.
+        expect(visits.length, equals(1));
+
+        container.dispose();
+      },
+    );
+
+    // P4ME-43: Mixed visits — some with matching restaurants, some without — all appear.
+    test(
+      'P4ME-43 — mixed visits (with and without matching restaurants) all appear in browse',
+      () async {
+        final mockVisitRepo = _MockVisitRepository();
+        final mockRestaurantRepo = _MockRestaurantRepository();
+
+        // Visit with a matching restaurant.
+        await mockVisitRepo.saveVisit(_makeVisit(
+          restaurantId: 1,
+          compositeScore: 85.0,
+          createdAt: DateTime(2025, 6, 1),
+          id: 1,
+        ));
+        await mockRestaurantRepo.saveRestaurant(_makeRestaurant(name: 'Place A')..id = 1);
+
+        // Visit with restaurantId=0 (no matching restaurant).
+        await mockVisitRepo.saveVisit(_makeVisit(
+          restaurantId: 0,
+          compositeScore: 70.0,
+          createdAt: DateTime(2025, 5, 1),
+          id: 10,
+        ));
+
+        // Visit referencing a non-existent restaurant (e.g., restaurant was deleted).
+        await mockVisitRepo.saveVisit(_makeVisit(
+          restaurantId: 999,
+          compositeScore: 60.0,
+          createdAt: DateTime(2025, 4, 1),
+          id: 20,
+        ));
+
+        final container = ProviderContainer(overrides: [
+          visitsListFilterProvider.overrideWith(() => VisitListFilterNotifier.withRepos(mockVisitRepo, mockRestaurantRepo)),
+        ]);
+
+        await container.read(visitsListFilterProvider.future);
+        final state = container.read(visitsListFilterProvider);
+
+        expect(state, isA<AsyncData<List<FilteredVisit>>>());
+        final visits = (state as AsyncData).value;
+        // BUG: Currently returns only 1 (the one with a matching restaurant).
+        // All 3 should appear.
+        expect(visits.length, equals(3));
+
+        container.dispose();
+      },
+    );
   });
 }

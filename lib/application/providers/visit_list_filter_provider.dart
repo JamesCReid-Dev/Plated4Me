@@ -13,12 +13,16 @@ import 'package:plated4me/application/providers/data_providers.dart';
 import 'package:plated4me/domain/entities/entities.dart';
 import 'package:plated4me/domain/repositories/repositories.dart';
 
+/// Placeholder name for visits whose restaurant could not be resolved.
+const _kUnknownRestaurantName = 'Unknown Restaurant';
+
 /// Joined visit + restaurant data for display in VisitCard widgets.
 class FilteredVisit {
   /// The visit record.
   final Visit visit;
 
   /// The associated restaurant (resolved by [Visit.restaurantId]).
+  /// May be a placeholder when no matching restaurant exists (P4ME-43).
   final Restaurant restaurant;
 
   const FilteredVisit({required this.visit, required this.restaurant});
@@ -60,16 +64,21 @@ class VisitListFilterNotifier extends AsyncNotifier<List<FilteredVisit>> {
   }
 
   /// Builds the result list from raw visit and restaurant data.
+  ///
+  /// Joins each [Visit] with its [Restaurant]. Visits whose [Visit.restaurantId]
+  /// does not match any restaurant (e.g., orphaned visits from QuickLog's
+  /// `restaurantId: 0`) are included with a placeholder name (P4ME-43).
   List<FilteredVisit> _buildFilteredResult(
       List<Visit> visits, List<Restaurant> restaurants) {
     final restaurantMap = {for (final r in restaurants) r.id: r};
 
+    // P4ME-43: Placeholder for visits with no matching restaurant.
+    final unknownRestaurant = Restaurant(name: _kUnknownRestaurantName);
+
     final result = <FilteredVisit>[];
     for (final visit in visits) {
-      final restaurant = restaurantMap[visit.restaurantId];
-      if (restaurant != null) {
-        result.add(FilteredVisit(visit: visit, restaurant: restaurant));
-      }
+      final restaurant = restaurantMap[visit.restaurantId] ?? unknownRestaurant;
+      result.add(FilteredVisit(visit: visit, restaurant: restaurant));
     }
 
     // AC-2: Default sort — most recent first.
