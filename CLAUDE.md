@@ -40,24 +40,43 @@ If `--labels` is not supported by the CLI, add a comment to the story noting it 
 
 Gates MUST be followed in strict order. Each gate's prerequisites must be complete before proceeding. **NO code, test, or implementation changes are allowed until after Gate 1 completes.**
 
+**Every gate that produces a result MUST have a Jira comment posted.** Never combine multiple gates into a single comment — each gate gets its own distinct update on the story. This ensures a clear audit trail of the TDD process.
+
 **Gate 0:** Create branch `<owner>-<phase>-STORY###`, push to remote
+- No Jira comment needed (branching is mechanical).
+
 **Gate 1 (In Progress):** Transition Jira to `In Progress`, assign to self — **MUST complete before ANY test writing, code changes, or implementation work**
+- Post a Jira comment confirming the story is now in progress and assigned.
+
 **Gate 1.5 (Defect Verification only):** For defect stories: reproduce the issue, confirm root cause, document findings — still NO code changes
+- Post a Jira comment documenting: reproduction steps, confirmed root cause, fix scope assessment.
+- **No code changes at this stage.**
 
 > **🚫 VIOLATION CHECK:** Before writing any test or code, verify Jira status is `In Progress`. If it is not, transition it first. Working on a story while it remains in `To Do` is a process violation.
 
-**Gate 2 (Red):** Write failing tests for every AC, verify all fail, post results to Jira
-**Gate 3 (Green):** Implement ONLY enough code to make red tests pass
-**Gate 4 (Refactor):** Clean up code + tests, run full suite, post final results to Jira
+**Gate 2 (Red):** Write failing tests for every AC, verify all fail
+- Post a Jira comment with: test file path(s), which tests failed, the actual vs. expected output showing each failure.
+- **Do not proceed to implementation until all tests are confirmed failing and results are posted.**
 
-> **⚠️ CRITICAL — Gate 5 Status Transition:** After posting test results to Jira, the VERY FIRST step of Gate 5 is to transition the Jira issue to `In Review` BEFORE any git operations:
+**Gate 3 (Green):** Implement ONLY enough code to make red tests pass, then re-run tests
+- Post a Jira comment with: what was changed (file + line diff), test result showing each previously-red test now passing.
+- **This is a separate comment from Gate 2 and Gate 4 — never combine them.**
+
+**Gate 4 (Refactor):** Clean up code + tests, run full suite (`flutter test`), check analyzer (`flutter analyze`)
+- Post a Jira comment with: refactoring summary, full test suite results (pass/fail count), analyzer results (any new issues).
+- **This is the final gate before transitioning to In Review.**
+
+> **⚠️ CRITICAL — Gate 5 Status Transition:** After posting Gate 4 results to Jira, the VERY FIRST step of Gate 5 is to transition the Jira issue to `In Review` BEFORE any git operations:
 > ```bash
 > acli jira workitem transition --key <KEY> --status "In Review"
 > ```
 > **Never skip this step.** The story must be in "In Review" before committing, pushing, or creating a PR.
 
-**Gate 5:** Transition to `In Review` → commit/push → create PR
+**Gate 5:** Transition to `In Review` → commit/push → create PR (via `gh pr create`)
+- No Jira comment needed — the PR link is created as part of the gate execution.
+
 **Gate 5.5:** Rebase onto latest main (resolve conflicts locally)
+- No Jira comment needed — rebase is a mechanical operation.
 
 ## Flutter Commands
 
@@ -66,6 +85,7 @@ Gates MUST be followed in strict order. Each gate's prerequisites must be comple
 - **Tests:** `flutter test`
 - **Analyze:** `flutter analyze`
 - **iOS simulator:** `xcrun simctl list devices available` then `xcrun simctl boot "<name>"`
+
 
 
 ## Android USB-C Deployment
