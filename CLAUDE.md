@@ -42,7 +42,7 @@ Gates MUST be followed in strict order. Each gate's prerequisites must be comple
 
 **Every gate that produces a result MUST have a Jira comment posted.** Never combine multiple gates into a single comment — each gate gets its own distinct update on the story. This ensures a clear audit trail of the TDD process.
 
-**Gate 0:** Create branch `<owner>-<phase>-STORY###`, push to remote
+**Gate 0:** Create branch `<owner>-defect-p4me-###` (or `<owner>-feat-p4me-###`), push to remote
 - No Jira comment needed (branching is mechanical).
 
 **Gate 1 (In Progress):** Transition Jira to `In Progress`, assign to self — **MUST complete before ANY test writing, code changes, or implementation work**
@@ -86,7 +86,23 @@ Gates MUST be followed in strict order. Each gate's prerequisites must be comple
 - **Analyze:** `flutter analyze`
 - **iOS simulator:** `xcrun simctl list devices available` then `xcrun simctl boot "<name>"`
 
+## acli Jira Command Reference
 
+Correct flag syntax for common operations (discovered P4ME-43):
+
+```bash
+# View work item
+acli jira workitem view <KEY>
+
+# Transition status
+acli jira workitem transition --key <KEY> --status "In Progress"
+
+# Create comment  (uses -k / --key, NOT positional arg)
+acli jira workitem comment create -k <KEY> --body "comment text"
+
+# List comments
+acli jira workitem comment list -k <KEY>
+```
 
 ## Android USB-C Deployment
 
@@ -94,3 +110,19 @@ Gates MUST be followed in strict order. Each gate's prerequisites must be comple
 2. Connect via USB-C, allow debugging dialog
 3. Verify: `adb devices` (should show device)
 4. Run: `flutter run` (auto-detects connected device)
+
+### Samsung Galaxy Troubleshooting
+
+Samsung's aggressive battery manager (`FreecessController`) may kill debug processes when the screen is off — the app launches but `flutter run` reports "Lost connection to device."
+
+**Workaround:**
+```bash
+# Build APK first
+flutter build apk --debug
+
+# Install manually
+adb -s <device-id> install -r -t build/app/outputs/flutter-apk/app-debug.apk
+
+# Launch on device (stays alive)
+adb -s <device-id> shell am start -n com.plated4me.plated4me/.MainActivity
+```
