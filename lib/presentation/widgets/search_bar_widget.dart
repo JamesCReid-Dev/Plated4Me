@@ -5,6 +5,8 @@
 /// AC-5: Focus shows keyboard; list updates debounced 200ms.
 /// AC-6: Clear button (X) clears text and dismisses keyboard.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plated4me/application/providers/search_provider.dart';
@@ -20,9 +22,12 @@ class SearchBarWidget extends ConsumerStatefulWidget {
 class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  bool _isUserTyping = false;
+  Timer? _debounceTimer;
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -33,10 +38,11 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
     final theme = Theme.of(context);
     final query = ref.watch(searchProvider).query;
 
-    // Sync controller with provider state.
-    if (_controller.text != query) {
+    // Sync controller with provider state only when not user-typing.
+    if (_controller.text != query && !_isUserTyping) {
       _controller.text = query;
     }
+    _isUserTyping = false;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -67,7 +73,13 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
         onChanged: (value) {
-          ref.read(searchProvider.notifier).setQuery(value);
+          _isUserTyping = true;
+          // Cancel previous debounce timer.
+          _debounceTimer?.cancel();
+          // Debounce search by 200ms (AC-5).
+          _debounceTimer = Timer(const Duration(milliseconds: 200), () {
+            ref.read(searchProvider.notifier).setQuery(value);
+          });
         },
       ),
     );

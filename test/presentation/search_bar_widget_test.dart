@@ -43,9 +43,9 @@ void main() {
         ),
       );
 
-      // Type a query.
+      // Type a query and wait for 200ms debounce to fire.
       await tester.enterText(find.byType(TextField), 'Sakura');
-      await tester.pump(); // trigger onChanged → setQuery
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.byIcon(Icons.clear), findsOneWidget);
 

@@ -199,11 +199,11 @@ class _RestaurantNameText extends StatelessWidget {
         .map((s) => TextSpan(
               text: s.text,
               style: s.isMatch
-                  ? theme.textTheme.bodyMedium?.copyWith(
+                  ? theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
                     )
-                  : theme.textTheme.bodyMedium,
+                  : theme.textTheme.titleLarge,
             ))
         .toList();
 

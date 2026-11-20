@@ -102,17 +102,14 @@ class SearchService {
           bestTier = _updateBest(bestTier, 3);
         }
 
-        // Tier 4: Journal entry dish name match
+        // Tiers 4 & 5: Journal entry dish name and impressions match (single pass)
         for (final entry in fv.visit.journalEntries) {
           final dishLower = entry.dishName.toLowerCase();
           if (dishLower.contains(token)) {
             highlights.add(MatchHighlight(field: 'dishName', matchedText: _extractMatch(entry.dishName, token), tier: 4));
             bestTier = _updateBest(bestTier, 4);
           }
-        }
 
-        // Tier 5: Journal entry impressions match
-        for (final entry in fv.visit.journalEntries) {
           final impLower = entry.impressions.toLowerCase();
           if (impLower.contains(token)) {
             highlights.add(MatchHighlight(field: 'impressions', matchedText: _extractMatch(entry.impressions, token), tier: 5));
