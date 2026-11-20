@@ -86,23 +86,7 @@ Gates MUST be followed in strict order. Each gate's prerequisites must be comple
 - **Analyze:** `flutter analyze`
 - **iOS simulator:** `xcrun simctl list devices available` then `xcrun simctl boot "<name>"`
 
-## acli Jira Command Reference
 
-Correct flag syntax for common operations (discovered P4ME-43):
-
-```bash
-# View work item
-acli jira workitem view <KEY>
-
-# Transition status
-acli jira workitem transition --key <KEY> --status "In Progress"
-
-# Create comment  (uses -k / --key, NOT positional arg)
-acli jira workitem comment create -k <KEY> --body "comment text"
-
-# List comments
-acli jira workitem comment list -k <KEY>
-```
 
 ## Android USB-C Deployment
 
