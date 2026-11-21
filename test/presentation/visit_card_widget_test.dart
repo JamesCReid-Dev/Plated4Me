@@ -5,6 +5,7 @@
 ///
 /// Coverage: AC-1 (card layout), AC-8 (blacklist overlay), AC-9 (tap navigation),
 /// AC-10 (cold open empty state).
+/// P4ME-46 — highlighted text uses titleLarge style (regression test).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
 import 'package:plated4me/domain/entities/entities.dart';
 import 'package:plated4me/presentation/screens/browse_screen.dart';
+import 'package:plated4me/domain/services/search_service.dart';
 import 'package:plated4me/presentation/widgets/visit_card_widget.dart';
 
 // -- Test data helpers --------------------------------------------------------
@@ -267,6 +269,70 @@ void main() {
         await tester.tap(find.byType(GestureDetector));
         await tester.pumpAndSettle();
         expect(find.byType(VisitDetailView), findsOneWidget);
+      },
+    );
+
+    // P4ME-46: Highlighted text uses titleLarge (not bodyMedium) for visual consistency.
+    testWidgets(
+      'P4ME-46 — highlighted restaurant name spans use titleLarge style',
+      (tester) async {
+        final fv = _makeFilteredVisit(
+          restaurantId: 1,
+          compositeScore: 80.0,
+          createdAt: DateTime(2025, 6, 1),
+          restaurantName: 'Sushi Place',
+        );
+
+        final matchHighlights = <MatchHighlight>[
+          const MatchHighlight(field: 'restaurantName', matchedText: 'Sushi', tier: 1),
+        ];
+
+        String? capturedTitleLargeSize;
+
+        await tester.pumpWidget(_buildTestApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                capturedTitleLargeSize = Theme.of(context).textTheme.titleLarge?.fontSize.toString();
+                return VisitCard(
+                  filteredVisit: fv,
+                  matchHighlights: matchHighlights,
+                  searchQuery: 'sushi',
+                );
+              },
+            ),
+          ),
+          overrides: [
+            visitsListFilterProvider.overrideWith(() => _FakeFilterNotifier([fv])),
+          ],
+        ));
+
+        // When highlights are present the name is rendered as Text.rich.
+        final textWidget = tester.widget<Text>(find.byKey(const Key('restaurant_name')));
+        final textSpan = textWidget.textSpan as TextSpan;
+
+        // Collect all TextSpans recursively from the children list.
+        final allSpans = <TextSpan>[];
+
+        void collect(TextSpan span) {
+          allSpans.add(span);
+          for (final child in span.children ?? []) {
+            if (child is TextSpan) {
+              collect(child);
+            }
+          }
+        }
+
+        collect(textSpan);
+
+        // Every span must use titleLarge as the base style — never bodyMedium.
+        for (final span in allSpans) {
+          expect(
+            span.style?.fontSize?.toString(),
+            equals(capturedTitleLargeSize),
+            reason: 'Span "${span.text}" should use titleLarge font size',
+          );
+        }
       },
     );
   });
