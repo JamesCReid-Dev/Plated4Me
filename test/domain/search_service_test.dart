@@ -464,5 +464,91 @@ void main() {
         expect(stopwatch.elapsedMilliseconds, lessThan(200));
       },
     );
+
+    // -- P4ME-47: Single-pass journal entry iteration regression tests --------
+
+    test(
+      'P4ME-47 — both dish name and impressions highlights returned from same entry (single pass)',
+      () async {
+        final service = SearchService();
+        final results = service.search(
+          query: 'Ramen',
+          visits: [
+            _makeFilteredVisit(
+              restaurantName: 'Sakura',
+              journalEntries: [JournalEntry(dishName: 'Ramen Deluxe', impressions: 'Best ramen in town')],
+            ),
+          ],
+        );
+        expect(results.length, equals(1));
+        // Both dish name (tier 4) and impressions (tier 5) should be highlighted.
+        final dishHighlights = results[0].matchHighlights.where((h) => h.field == 'dishName').toList();
+        final impHighlights = results[0].matchHighlights.where((h) => h.field == 'impressions').toList();
+        expect(dishHighlights.length, equals(1));
+        expect(dishHighlights[0].matchedText, contains('Ramen'));
+        expect(impHighlights.length, equals(1));
+        expect(impHighlights[0].matchedText, contains('ramen'));
+      },
+    );
+
+    test(
+      'P4ME-47 — multiple entries with mixed dish/impressions matches in single pass',
+      () async {
+        final service = SearchService();
+        final results = service.search(
+          query: 'Sushi',
+          visits: [
+            _makeFilteredVisit(
+              restaurantName: 'Tokyo',
+              journalEntries: [
+                JournalEntry(dishName: 'Sushi Platter', impressions: ''),           // dish match only
+                JournalEntry(dishName: 'Tempura', impressions: 'Great sushi'),      // impressions match only
+                JournalEntry(dishName: 'Sushi Roll', impressions: 'Fresh sushi'),   // both matches
+              ],
+            ),
+          ],
+        );
+        expect(results.length, equals(1));
+        final dishHighlights = results[0].matchHighlights.where((h) => h.field == 'dishName').toList();
+        final impHighlights = results[0].matchHighlights.where((h) => h.field == 'impressions').toList();
+        // Two dish name matches (Sushi Platter, Sushi Roll) + two impressions matches (Great sushi, Fresh sushi)
+        expect(dishHighlights.length, equals(2));
+        expect(impHighlights.length, equals(2));
+      },
+    );
+
+    test(
+      'P4ME-47 — single pass handles empty journal entries gracefully',
+      () async {
+        final service = SearchService();
+        final results = service.search(
+          query: 'Ramen',
+          visits: [
+            _makeFilteredVisit(
+              restaurantName: 'Sakura',
+              journalEntries: [],
+            ),
+          ],
+        );
+        expect(results, isEmpty);
+      },
+    );
+
+    test(
+      'P4ME-47 — single pass handles null/empty dish name and impressions',
+      () async {
+        final service = SearchService();
+        // JournalEntry with empty strings should not crash the single-pass loop.
+        expect(() => service.search(
+          query: 'test',
+          visits: [
+            _makeFilteredVisit(
+              restaurantName: 'Test',
+              journalEntries: [JournalEntry(dishName: '', impressions: '')],
+            ),
+          ],
+        ), returnsNormally);
+      },
+    );
   });
 }
