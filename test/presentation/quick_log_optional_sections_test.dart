@@ -214,7 +214,7 @@ void main() {
                 Restaurant(name: 'Test Restaurant', address: '123 Main St'),
               ]);
             }),
-            visitsDataProvider.overrideWith((_) => _FakeSaveNotifier()),
+            visitsDataProvider.overrideWith(() => _FakeSaveNotifier()),
           ],
         );
 
