@@ -2,16 +2,22 @@
 ///
 /// Shows visit history with restaurant name, date, composite score bar,
 /// and return intent pill. Filter icon opens bottom sheet with filter options.
+/// Search bar at top for full-text search across all visit data.
 /// Empty state shown when no visits exist.
 ///
 /// P4ME-17 — S10 Filterable Visit Card List.
 /// Covers AC-2 (default sort), AC-3 (filter sheet), AC-5 (apply filters),
 /// AC-6 (clear all), AC-7 (active filter badge), AC-10 (empty state).
+/// P4ME-18 — Full-Text Search.
+/// Covers AC-1 (search bar), AC-2 (cross-field search), AC-3 (ranking),
+/// AC-4 (highlighting), AC-5 (debounce + keyboard), AC-6 (clear), AC-7 (no results).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plated4me/application/providers/search_provider.dart';
 import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
 import 'package:plated4me/domain/entities/entities.dart';
+import 'package:plated4me/presentation/widgets/search_bar_widget.dart';
 import 'package:plated4me/presentation/widgets/visit_card_widget.dart';
 
 /// Browse screen showing all [Visit] records as filterable cards.
@@ -21,6 +27,7 @@ class BrowseScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final visitsAsync = ref.watch(visitsListFilterProvider);
+    final searchState = ref.watch(searchProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -36,22 +43,72 @@ class BrowseScreen extends ConsumerWidget {
           child: Text('Failed to load visits: $e'),
         ),
         data: (visits) {
-          if (visits.isEmpty) {
-            return const _EmptyState();
+          // AC-1: Search bar at top of list view.
+          const searchBar = SearchBarWidget();
+
+          // Determine what to display based on search state.
+          if (searchState.searchResults == null) {
+            // No active search — show filtered visits.
+            if (visits.isEmpty) {
+              return Column(
+                children: [
+                  searchBar,
+                  const Expanded(child: _EmptyState()),
+                ],
+              );
+            }
+            return Column(
+              children: [
+                searchBar,
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async =>
+                        ref.read(visitsListFilterProvider.notifier).refresh(),
+                    child: ListView.separated(
+                      itemCount: visits.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final fv = visits[index];
+                        return VisitCard(
+                          filteredVisit: fv,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
           }
-          return RefreshIndicator(
-            onRefresh: () async =>
-                ref.read(visitsListFilterProvider.notifier).refresh(),
-            child: ListView.separated(
-              itemCount: visits.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final fv = visits[index];
-                return VisitCard(
-                  filteredVisit: fv,
-                );
-              },
-            ),
+
+          // Active search — show ranked results.
+          if (searchState.searchResults!.isEmpty) {
+            // AC-7: No matches centered message.
+            return Column(
+              children: [
+                searchBar,
+                const Expanded(child: _NoMatchesState()),
+              ],
+            );
+          }
+
+          return Column(
+            children: [
+              searchBar,
+              Expanded(
+                child: ListView.separated(
+                  itemCount: searchState.searchResults!.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final sr = searchState.searchResults![index];
+                    return VisitCard(
+                      filteredVisit: sr.visit,
+                      matchHighlights: sr.matchHighlights,
+                      searchQuery: searchState.query,
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -279,6 +336,34 @@ class _EmptyState extends StatelessWidget {
           SizedBox(height: 8),
           Text(
             'Tap + to log your first dining experience',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// AC-7: "No matches." centered message when search returns no results.
+class _NoMatchesState extends StatelessWidget {
+  const _NoMatchesState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'No matches.',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Try a different search term',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey),
           ),

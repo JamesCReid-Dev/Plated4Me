@@ -3,33 +3,33 @@
 /// Shows restaurant name, date, composite score bar, and return intent pill.
 /// When blacklisted, displays a 40% ink-disabled grey overlay with dimmed text.
 /// Tapping navigates to Visit Detail View.
+/// Supports search result highlighting (AC-4).
 ///
 /// P4ME-17 — S10 Filterable Visit Card List.
 /// Covers AC-1 (card layout), AC-8 (blacklist overlay), AC-9 (tap navigation).
+/// P4ME-18 — Full-Text Search.
+/// Covers AC-4 (matching text highlighted in results).
 
 import 'package:flutter/material.dart';
 import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
+import 'package:plated4me/domain/services/search_service.dart';
+import 'package:plated4me/presentation/extensions/highlight_extension.dart';
 
 /// A card displaying a single visit's key information.
-///
-/// Used in the BrowseScreen's visit list. Shows restaurant name, date,
-/// composite score bar, and return intent pill per DESIGN.md Visit Card spec.
 class VisitCard extends StatelessWidget {
-  /// The joined visit + restaurant data to display.
   final FilteredVisit filteredVisit;
-
-  /// Callback invoked when the card is tapped.
-  ///
-  /// If null, a default navigation to Visit Detail View is used.
   final VoidCallback? onTap;
+  final List<MatchHighlight>? matchHighlights;
+  final String? searchQuery;
 
   const VisitCard({
     super.key,
     required this.filteredVisit,
     this.onTap,
+    this.matchHighlights,
+    this.searchQuery,
   });
 
-  /// Returns the accent color for the score bar based on composite score.
   static Color _scoreColor(double score) {
     if (score >= 80) return Colors.green;
     if (score >= 60) return Colors.amber;
@@ -37,7 +37,6 @@ class VisitCard extends StatelessWidget {
     return Colors.red;
   }
 
-  /// Formats the date as a relative string ("2 days ago") or formatted date.
   static String _formatDate(DateTime date, BuildContext context) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -47,7 +46,6 @@ class VisitCard extends StatelessWidget {
     if (difference.inDays < 7) return '${difference.inDays} days ago';
     if (difference.inDays < 14) return '1 week ago';
 
-    // For older dates, use a formatted string.
     return '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
   }
 
@@ -72,32 +70,22 @@ class VisitCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Row: restaurant name + return intent pill
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Text(
-                        restaurant.name.length > 40
-                            ? '${restaurant.name.substring(0, 40)}...'
-                            : restaurant.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        key: const Key('restaurant_name'),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
+                      child: _RestaurantNameText(
+                        name: restaurant.name,
+                        matchHighlights: matchHighlights,
+                        searchQuery: searchQuery ?? '',
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // AC-1: Return intent pill (top-right)
                     _ReturnIntentPill(visit.returnIntent),
                   ],
                 ),
                 const SizedBox(height: 4),
 
-                // Date caption
                 Text(
                   _formatDate(visit.createdAt, context),
                   key: const Key('visit_date'),
@@ -108,7 +96,6 @@ class VisitCard extends StatelessWidget {
 
                 const SizedBox(height: 8),
 
-                // AC-1: Composite score bar at bottom of card
                 ClipRRect(
                   borderRadius: BorderRadius.circular(1.5),
                   child: LayoutBuilder(
@@ -138,7 +125,6 @@ class VisitCard extends StatelessWidget {
               ],
             ),
           ),
-          // AC-8: Blacklist overlay (40% ink-disabled grey)
           if (isBlacklisted)
             Container(
               key: const Key('blacklist_overlay'),
@@ -153,7 +139,6 @@ class VisitCard extends StatelessWidget {
     );
   }
 
-  /// Navigates to Visit Detail View for this visit.
   void _navigateToDetail(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -164,9 +149,80 @@ class VisitCard extends StatelessWidget {
   }
 }
 
+/// Widget that displays restaurant name with search match highlighting (AC-4).
+class _RestaurantNameText extends StatelessWidget {
+  final String name;
+  final List<MatchHighlight>? matchHighlights;
+  final String searchQuery;
+
+  const _RestaurantNameText({
+    required this.name,
+    this.matchHighlights,
+    required this.searchQuery,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (matchHighlights == null || matchHighlights!.isEmpty) {
+      return Text(
+        name.length > 40 ? '${name.substring(0, 40)}...' : name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        key: const Key('restaurant_name'),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+      );
+    }
+
+    final nameHighlight = matchHighlights!.firstWhere(
+      (h) => h.field == 'restaurantName',
+      orElse: () => const MatchHighlight(field: '', matchedText: '', tier: 0),
+    );
+
+    if (nameHighlight.tier == 0 || nameHighlight.matchedText.isEmpty) {
+      return Text(
+        name.length > 40 ? '${name.substring(0, 40)}...' : name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        key: const Key('restaurant_name'),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+      );
+    }
+
+    final theme = Theme.of(context);
+    final spans = nameHighlight.matchedText.highlightMatches(searchQuery)
+        .map((s) => TextSpan(
+              text: s.text,
+              style: s.isMatch
+                  ? theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    )
+                  : theme.textTheme.titleLarge,
+            ))
+        .toList();
+
+    return Text.rich(
+      TextSpan(
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: theme.colorScheme.onSurface,
+        ),
+        children: spans,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      key: const Key('restaurant_name'),
+    );
+  }
+}
+
 /// Small pill showing return intent (checkmark or X icon).
-///
-/// AC-1: Green checkmark if true, red X if false. 16x16 size.
 class _ReturnIntentPill extends StatelessWidget {
   final bool shouldReturn;
 
@@ -194,9 +250,6 @@ class _ReturnIntentPill extends StatelessWidget {
 }
 
 /// Placeholder Visit Detail View.
-///
-/// P4ME-17 AC-9: Tap card navigates to Visit Detail View.
-/// Full implementation will be in a later story.
 class VisitDetailView extends StatelessWidget {
   const VisitDetailView({super.key});
 
