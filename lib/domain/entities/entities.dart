@@ -20,6 +20,12 @@ class Restaurant {
   @Index(type: IndexType.value)
   String? address;
 
+  /// Free-text notes about this restaurant that span all visits.
+  ///
+  /// AC-1 (P4ME-19): Editable at Restaurant level, not per-Visit.
+  /// AC-2 (P4ME-19): Persists across all Visits to the same restaurant.
+  String? notes;
+
   /// When this restaurant record was first created.
   @Index(type: IndexType.value)
   DateTime createdAt = DateTime.now();
@@ -40,17 +46,24 @@ class Restaurant {
     Id? id,
     String? name,
     String? address,
+    String? notes,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return Restaurant(name: name ?? this.name, address: address ?? this.address)
       ..id = id ?? this.id
       ..createdAt = createdAt ?? this.createdAt
-      ..updatedAt = updatedAt ?? this.updatedAt;
+      ..updatedAt = updatedAt ?? this.updatedAt
+      ..notes = notes ?? this.notes;
   }
 
   @override
-  String toString() => 'Restaurant(name: $name, address: $address)';
+  String toString() {
+    if (notes != null) {
+      return 'Restaurant(name: $name, address: $address, notes: $notes)';
+    }
+    return 'Restaurant(name: $name, address: $address)';
+  }
 }
 
 @collection
