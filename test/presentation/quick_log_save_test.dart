@@ -337,54 +337,10 @@ void main() {
   // -- AC-3: Save Visit includes optional form data -----------------------------
 
   group('P4ME-40 — AC-3 Save Visit includes optional form fields', () {
-    testWidgets(
-      'saved Visit includes general notes from quickLogFormProvider',
-      (tester) async {
-        final container = makeContainer();
-
-        await tester.pumpWidget(
-          UncontrolledProviderScope(
-            container: container,
-            child: const MaterialApp(home: QuickLogScreen()),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        // Set ratings.
-        final ratingNotifier = container.read(visitRatingProvider.notifier);
-        ratingNotifier.setFoodRating(4.0);
-        ratingNotifier.setValueRating(3.0);
-        ratingNotifier.setServiceRating(5.0);
-        ratingNotifier.setOverallRating(4.0);
-
-        // Expand the notes accordion to initialize the controller (index 4).
-        final formNotifier = container.read(quickLogFormProvider.notifier);
-        formNotifier.toggleAccordion(4);
-        await tester.pumpAndSettle();
-
-        // Set general notes via form provider.
-        final formState = container.read(quickLogFormProvider);
-        expect(formState.generalNotesController, isNotNull,
-            reason: 'Controller should exist after accordion toggle');
-        formState.generalNotesController!.text = 'Great ambiance, slow service';
-
-        await tester.pumpAndSettle();
-
-        // Tap save.
-        await tester.tap(findSaveButton());
-        await tester.pumpAndSettle();
-
-        final visitNotifier = container.read(
-          visitsDataProvider.notifier,
-        ) as FakeVisitNotifier;
-        expect(visitNotifier.savedVisits.length, 1);
-        expect(
-          visitNotifier.savedVisits.first.generalNotes,
-          'Great ambiance, slow service',
-          reason: 'AC-3: general notes should be included in saved Visit',
-        );
-      },
-    );
+    // NOTE: P4ME-50 fix — restaurant notes now persist to Restaurant.notes via
+    // restaurantRepositoryProvider, not Visit.generalNotes. The old test that
+    // verified visit.generalNotes from QuickLogScreen has been removed; the
+    // correct behavior is covered by quick_log_restaurant_notes_test.dart.
 
     testWidgets(
       'saved Visit includes meal total and tip percent from form data',

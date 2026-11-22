@@ -210,7 +210,7 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
     final form = ref.read(quickLogFormProvider);
 
     final employeeNameText = form.employeeNameController?.text.trim();
-    final generalNotesText = form.generalNotesController?.text.trim();
+    final restaurantNotesText = form.restaurantNotesController?.text.trim();
 
     final visit = Visit(
       restaurantId: 0,
@@ -225,13 +225,21 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
      ..employeeName = (employeeNameText == null || employeeNameText.isEmpty)
          ? null
          : employeeNameText
-     ..generalNotes = (generalNotesText == null || generalNotesText.isEmpty)
-         ? null
-         : generalNotesText
      ..lineItems = List<VisitLineItem>.from(form.lineItems)
      ..journalEntries = List<JournalEntry>.from(form.journalEntries);
 
     await ref.read(visitsDataProvider.notifier).saveVisit(visit);
+
+    // Persist restaurant notes to the Restaurant entity (P4ME-50 fix).
+    if (restaurantNotesText != null && restaurantNotesText.isNotEmpty) {
+      final repo = ref.read(restaurantRepositoryProvider);
+      final restaurants = await repo.getAllRestaurants();
+      if (restaurants.isNotEmpty) {
+        final restaurant = restaurants.first;
+        restaurant.notes = restaurantNotesText;
+        await repo.saveRestaurant(restaurant);
+      }
+    }
 
     if (mounted) {
       Navigator.of(context).pop();
@@ -854,7 +862,7 @@ class _RestaurantNotesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: form.generalNotesController ?? TextEditingController(),
+      controller: form.restaurantNotesController ?? TextEditingController(),
       maxLines: 4,
       decoration: const InputDecoration(
         labelText: 'Restaurant Notes',
