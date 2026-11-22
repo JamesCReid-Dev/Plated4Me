@@ -1,6 +1,7 @@
 /// Search service implementing the 9-tier relevance ranking model (AD-9).
 ///
 /// P4ME-18 — Full-Text Search.
+/// P4ME-19 — Restaurant General Notes search integration.
 /// Ranks [FilteredVisit] results by tier priority, then by creation date descending.
 ///
 /// TIER MODEL:
@@ -9,10 +10,10 @@
 ///   3. Address match
 ///   4. Journal entry dish name match
 ///   5. Journal entry impressions match
-///   6. Voice transcript match (not yet implemented — no field)
+///   6. Restaurant general notes match (P4ME-19)
 ///   7. Employee name match
 ///   8. Occasion tag match
-///   9. General notes match
+///   9. Visit general notes match
 
 import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
 import 'package:plated4me/domain/entities/entities.dart';
@@ -61,9 +62,10 @@ class SearchService {
   ///   Tier 3 — Address match
   ///   Tier 4 — Journal entry dish name match
   ///   Tier 5 — Journal entry impressions match
+  ///   Tier 6 — Restaurant general notes match (P4ME-19)
   ///   Tier 7 — Employee name match
   ///   Tier 8 — Occasion tag match
-  ///   Tier 9 — General notes match
+  ///   Tier 9 — Visit general notes match
   ///
   /// Returns an empty list for empty/whitespace queries or when no matches are found.
   /// Search latency target: <200ms for full local dataset (NFR-6).
@@ -115,6 +117,12 @@ class SearchService {
             highlights.add(MatchHighlight(field: 'impressions', matchedText: _extractMatch(entry.impressions, token), tier: 5));
             bestTier = _updateBest(bestTier, 5);
           }
+        }
+
+        // Tier 6: Restaurant general notes match (P4ME-19)
+        if (fv.restaurant.notes != null && fv.restaurant.notes!.toLowerCase().contains(token)) {
+          highlights.add(MatchHighlight(field: 'restaurantNotes', matchedText: _extractMatch(fv.restaurant.notes!, token), tier: 6));
+          bestTier = _updateBest(bestTier, 6);
         }
 
         // Tier 7: Employee name match

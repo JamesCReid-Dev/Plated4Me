@@ -19,8 +19,8 @@ class QuickLogFormData {
   /// Employee/server name controller (nullable — initialised lazily).
   final TextEditingController? employeeNameController;
 
-  /// General restaurant notes controller (nullable — initialised lazily).
-  final TextEditingController? generalNotesController;
+  /// Restaurant notes controller (nullable — initialised lazily).
+  final TextEditingController? restaurantNotesController;
 
   /// Visit line items (dish name + optional price).
   final List<VisitLineItem> lineItems;
@@ -37,7 +37,7 @@ class QuickLogFormData {
     this.mealTotalController,
     this.tipPercentController,
     this.employeeNameController,
-    this.generalNotesController,
+    this.restaurantNotesController,
     List<VisitLineItem>? lineItems,
     List<JournalEntry>? journalEntries,
     List<bool>? expanded,
@@ -68,7 +68,7 @@ class QuickLogFormData {
     mealTotalController?.dispose();
     tipPercentController?.dispose();
     employeeNameController?.dispose();
-    generalNotesController?.dispose();
+    restaurantNotesController?.dispose();
   }
 
   /// Resets all form data to empty state.
@@ -76,7 +76,7 @@ class QuickLogFormData {
     mealTotalController?.clear();
     tipPercentController?.clear();
     employeeNameController?.clear();
-    generalNotesController?.clear();
+    restaurantNotesController?.clear();
     lineItems.clear();
     journalEntries.clear();
     for (var i = 0; i < expanded.length; i++) {
@@ -110,7 +110,7 @@ class QuickLogFormNotifier extends StateNotifier<QuickLogFormData> {
         mealTotalController: _ensureController(state.mealTotalController),
         tipPercentController: _ensureController(state.tipPercentController),
         employeeNameController: _ensureController(state.employeeNameController),
-        generalNotesController: _ensureController(state.generalNotesController),
+        restaurantNotesController: _ensureController(state.restaurantNotesController),
         lineItems: List<VisitLineItem>.from(state.lineItems),
         journalEntries: List<JournalEntry>.from(state.journalEntries),
         expanded: updated,
@@ -126,7 +126,7 @@ class QuickLogFormNotifier extends StateNotifier<QuickLogFormData> {
       mealTotalController: _ensureController(state.mealTotalController),
       tipPercentController: _ensureController(state.tipPercentController),
       employeeNameController: _ensureController(state.employeeNameController),
-      generalNotesController: _ensureController(state.generalNotesController),
+      restaurantNotesController: _ensureController(state.restaurantNotesController),
       lineItems: [...state.lineItems, item],
       journalEntries: List<JournalEntry>.from(state.journalEntries),
       expanded: List<bool>.from(state.expanded),
@@ -141,7 +141,7 @@ class QuickLogFormNotifier extends StateNotifier<QuickLogFormData> {
       mealTotalController: _ensureController(state.mealTotalController),
       tipPercentController: _ensureController(state.tipPercentController),
       employeeNameController: _ensureController(state.employeeNameController),
-      generalNotesController: _ensureController(state.generalNotesController),
+      restaurantNotesController: _ensureController(state.restaurantNotesController),
       lineItems: items,
       journalEntries: List<JournalEntry>.from(state.journalEntries),
       expanded: List<bool>.from(state.expanded),
@@ -159,7 +159,7 @@ class QuickLogFormNotifier extends StateNotifier<QuickLogFormData> {
       mealTotalController: _ensureController(state.mealTotalController),
       tipPercentController: _ensureController(state.tipPercentController),
       employeeNameController: _ensureController(state.employeeNameController),
-      generalNotesController: _ensureController(state.generalNotesController),
+      restaurantNotesController: _ensureController(state.restaurantNotesController),
       lineItems: List<VisitLineItem>.from(state.lineItems),
       journalEntries: [...state.journalEntries, entry],
       expanded: List<bool>.from(state.expanded),
@@ -174,7 +174,7 @@ class QuickLogFormNotifier extends StateNotifier<QuickLogFormData> {
       mealTotalController: _ensureController(state.mealTotalController),
       tipPercentController: _ensureController(state.tipPercentController),
       employeeNameController: _ensureController(state.employeeNameController),
-      generalNotesController: _ensureController(state.generalNotesController),
+      restaurantNotesController: _ensureController(state.restaurantNotesController),
       lineItems: List<VisitLineItem>.from(state.lineItems),
       journalEntries: entries,
       expanded: List<bool>.from(state.expanded),
@@ -192,8 +192,8 @@ class QuickLogFormNotifier extends StateNotifier<QuickLogFormData> {
         employeeNameController: TextEditingController(
           text: state.employeeNameController?.text ?? '',
         ),
-        generalNotesController: TextEditingController(
-          text: state.generalNotesController?.text ?? '',
+        restaurantNotesController: TextEditingController(
+          text: state.restaurantNotesController?.text ?? '',
         ),
         lineItems: List<VisitLineItem>.from(state.lineItems),
         journalEntries: List<JournalEntry>.from(state.journalEntries),
