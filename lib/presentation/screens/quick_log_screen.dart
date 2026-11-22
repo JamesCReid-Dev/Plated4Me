@@ -73,6 +73,9 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
   /// Accordion expanded state: [Meal, LineItems, Journal, AllergySafe, Notes]
   final List<bool> _expanded = [false, false, false, false, false];
 
+  /// Currently selected restaurant ID (null until user picks one).
+  int? _selectedRestaurantId;
+
   @override
   void initState() {
     super.initState();
@@ -96,6 +99,16 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(visitRatingProvider);
     final notifier = ref.read(visitRatingProvider.notifier);
+    final restaurantsAsync = ref.watch(restaurantDataProvider);
+
+    // Auto-select when there's exactly one restaurant (common case).
+    restaurantsAsync.whenData((restaurants) {
+      if (mounted &&
+          restaurants.length == 1 &&
+          _selectedRestaurantId == null) {
+        setState(() => _selectedRestaurantId = restaurants.first.id.toInt());
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -105,6 +118,64 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // -- Restaurant selector ----------------------------------------------
+            // Only show when there are 0 or 2+ restaurants. When exactly 1 exists,
+            // it's auto-selected in initState (preserves backward compatibility).
+            restaurantsAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+              data: (restaurants) {
+                // Single restaurant is auto-selected — no UI needed.
+                if (restaurants.length == 1) return const SizedBox.shrink();
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: restaurants.isEmpty
+                      ? InkWell(
+                          onTap: () => _showCreateRestaurantDialog(context),
+                          child: Text(
+                            'No restaurants saved yet — tap to add one',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: restaurants.map((restaurant) {
+                            final isSelected = _selectedRestaurantId == restaurant.id;
+                            return InkWell(
+                              onTap: () => setState(() => _selectedRestaurantId = restaurant.id.toInt()),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      isSelected ? Icons.check_circle : Icons.circle_outlined,
+                                      size: 16,
+                                      color: isSelected ? Colors.green : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        restaurant.name,
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                          color: isSelected ? Colors.green.shade700 : Colors.grey.shade800,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                );
+              },
+            ),
+
             // -- Sliders section --------------------------------------------------
             Expanded(
               child: SingleChildScrollView(
@@ -213,7 +284,7 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
     final restaurantNotesText = form.restaurantNotesController?.text.trim();
 
     final visit = Visit(
-      restaurantId: 0,
+      restaurantId: _selectedRestaurantId ?? 0,
       foodRating: state.foodRating,
       valueRating: state.valueRating,
       serviceRating: state.serviceRating,
@@ -244,6 +315,50 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
     if (mounted) {
       Navigator.of(context).pop();
     }
+  }
+
+  /// Shows a dialog to create a new restaurant when none exist.
+  void _showCreateRestaurantDialog(BuildContext context) {
+    final controller = TextEditingController();
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New Restaurant'),
+        content: TextFormField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Restaurant Name',
+            border: OutlineInputBorder(),
+            hintText: 'e.g. Sushi Zen',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              if (name.isEmpty) return;
+
+              final newRestaurant = Restaurant(name: name);
+              await ref.read(restaurantDataProvider.notifier).saveRestaurant(newRestaurant);
+
+              // Auto-select the newly created restaurant.
+              setState(() => _selectedRestaurantId = newRestaurant.id.toInt());
+
+              if (mounted && Navigator.of(ctx).canPop()) {
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
