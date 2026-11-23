@@ -66,14 +66,14 @@ Gates MUST be followed in strict order. Each gate's prerequisites must be comple
 - Post a Jira comment with: refactoring summary, full test suite results (pass/fail count), analyzer results (any new issues).
 - **This is the final gate before transitioning to In Review.**
 
-> **⚠️ CRITICAL — Gate 5 Status Transition:** After posting Gate 4 results to Jira, the VERY FIRST step of Gate 5 is to transition the Jira issue to `In Review` BEFORE any git operations:
-> ```bash
-> acli jira workitem transition --key <KEY> --status "In Review"
-> ```
-> **Never skip this step.** The story must be in "In Review" before committing, pushing, or creating a PR.
-
 **Gate 5:** Transition to `In Review` → commit/push → create PR (via `gh pr create`)
-- No Jira comment needed — the PR link is created as part of the gate execution.
+- **STEP 1 — MANDATORY FIRST ACTION:** After posting Gate 4 results, immediately transition Jira to `In Review`. This is NOT optional and MUST happen before any git operations.
+  ```bash
+  acli jira workitem transition --key <KEY> --status "In Review"
+  ```
+- **STEP 2 — NEVER SKIP STEP 1:** The story must be in "In Review" status BEFORE committing, pushing, or creating a PR. Skipping this step is a process violation.
+- **STEP 3:** Commit changes → push branch → create PR (via `gh pr create`).
+- No Jira comment needed for steps 2–3 — the PR link is created as part of gate execution.
 
 **Gate 5.5:** Rebase onto latest main (resolve conflicts locally)
 - No Jira comment needed — rebase is a mechanical operation.
