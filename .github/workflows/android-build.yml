@@ -1,0 +1,159 @@
+name: Android Build & Emulator Run
+
+on:
+  push:
+    branches:
+      - "jc-dev-**"
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same branch when a new commit is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-build:
+    name: Android Build & Emulator Run
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ANDROID_HOME: ${{ runner.home }}/android-sdk
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter 3.47.8
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.8"
+          channel: stable
+          cache: true
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install Android SDK, create AVD & launch emulator
+        run: |
+          export ANDROID_HOME=${{ runner.home }}/android-sdk
+          mkdir -p $ANDROID_HOME
+
+          # Download and install command-line-tools
+          cd $HOME
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          unzip -q cmdline-tools -d $ANDROID_HOME/cmdline-tools
+          mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+
+          # Accept Android SDK licenses
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+
+          # Install required SDK packages
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" >/dev/null 2>&1
+
+          # Create and launch headless AVD
+          avdname="headless_android"
+
+          if ! avdmanager list avd | grep -q "$avdname"; then
+            avdmanager create avd -n "$avdname" \
+              -k "system-images;android-35;default;x86_64" \
+              -g default --force
+          fi
+
+          echo "Starting emulator..."
+          $HOME/.android/avd/$avdname.avd/bin/emulator \
+            -avd "$avdname" \
+            -no-audio -no-window -gpu swiftshader_indirect \
+            -no-snapshot -no-boot-anim -nojni -delay-adb &
+
+          echo "Waiting for emulator to appear in ADB..."
+          $HOME/.android/avd/$avdname.avd/bin/platform-tools/adb wait-for-device
+
+          echo "Waiting for Android boot to complete..."
+          BOOT_TIMEOUT=300
+          STARTED=false
+          while [ "$BOOT_TIMEOUT" -gt 0 ]; do
+            if $HOME/.android/avd/$avdname.avd/bin/platform-tools/adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; then
+              STARTED=true
+              break
+            fi
+            sleep 5
+            BOOT_TIMEOUT=$((BOOT_TIMEOUT - 5))
+          done
+
+          if [ "$STARTED" = true ]; then
+            echo "Emulator booted successfully."
+          else
+            echo "WARNING: Emulator boot timeout reached, but device may still be usable."
+            $HOME/.android/avd/$avdname.avd/bin/platform-tools/adb shell getprop sys.boot_completed || true
+          fi
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run Flutter analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run Flutter tests
+        run: flutter test --concurrency=2
+
+      - name: Build and deploy to emulator
+        id: deploy
+        env:
+          ANDROID_HOME: ${{ runner.home }}/android-sdk
+        run: |
+          avdname="headless_android"
+          EMULATOR_ID=$($HOME/.android/avd/$avdname.avd/bin/platform-tools/adb devices \
+            | grep -v "List" | head -1 | cut -f1)
+
+          echo "Deploying to emulator: $EMULATOR_ID"
+
+          flutter build apk --debug
+          $HOME/.android/avd/$avdname.avd/bin/platform-tools/adb install -r -t \
+            build/app/outputs/flutter-apk/app-debug.apk
+
+          echo "emulator_id=$EMULATOR_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Launch app and verify
+        id: launch
+        env:
+          ANDROID_HOME: ${{ runner.home }}/android-sdk
+        run: |
+          avdname="headless_android"
+          EMULATOR_ID="${{ steps.deploy.outputs.emulator_id }}"
+
+          $HOME/.android/avd/$avdname.avd/bin/platform-tools/adb -s "$EMULATOR_ID" \
+            shell am start -n com.plated4me.plated4me/.MainActivity
+
+          sleep 10
+
+          APP_RUNNING=$($HOME/.android/avd/$avdname.avd/bin/platform-tools/adb -s "$EMULATOR_ID" \
+            shell ps -A | grep plated4me || true)
+
+          if [ -n "$APP_RUNNING" ]; then
+            echo "App launched successfully on emulator $EMULATOR_ID."
+            echo "status=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "ERROR: App failed to launch or crashed immediately."
+            echo "status=failure" >> "$GITHUB_OUTPUT"
+
+            echo "--- Recent logcat output ---"
+            $HOME/.android/avd/$avdname.avd/bin/platform-tools/adb -s "$EMULATOR_ID" \
+              logcat -d -b main *:E | tail -50 || true
+          fi
+
+      - name: Cleanup emulator
+        if: always()
+        run: |
+          echo "Cleaning up emulator..."
+          pkill -f "emulator.*avd" || true
+          flutter clean
