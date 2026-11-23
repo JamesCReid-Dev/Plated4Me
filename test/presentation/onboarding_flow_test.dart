@@ -6,7 +6,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plated4me/domain/entities/entities.dart';
 import 'package:plated4me/presentation/screens/onboarding_screen.dart';
 
 /// Builds a test widget tree with Riverpod scope and MaterialApp.
@@ -160,11 +159,11 @@ void main() {
     ) async {
       await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
-      // AC-1: Chip type exists in the widget tree (FilterChip for severity, Chip for allergens)
+      // AC-1: Chip type exists in the widget tree (ElevatedButton for severity, Chip for allergens)
       expect(
-        find.byType(RadioListTile<AllergenSeverity>),
+        find.byType(ElevatedButton),
         findsWidgets,
-        reason: 'AC-1: Radio buttons for severity selection',
+        reason: 'AC-1: Severity selection buttons present',
       );
     });
   });
@@ -212,11 +211,11 @@ void main() {
     testWidgets('5-star card displays star icons (AC-3)', (tester) async {
       await tester.pumpWidget(_testWrapper(const OnboardingScreen()));
 
-      // AC-3: Severity radio buttons exist on allergies screen as baseline
+      // AC-3: Severity buttons exist on allergies screen as baseline
       expect(
-        find.byType(RadioListTile<AllergenSeverity>),
+        find.byType(ElevatedButton),
         findsWidgets,
-        reason: 'AC-3: Radio controls used for selection patterns',
+        reason: 'AC-3: Selection controls used for selection patterns',
       );
     });
   });

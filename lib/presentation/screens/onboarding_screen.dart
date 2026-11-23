@@ -71,6 +71,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Skip button (always visible)
@@ -78,7 +79,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onPressed: _skip,
                     child: const Text('Skip for now'),
                   ),
+                  const Spacer(),
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       if (state.currentScreen > 0)
                         TextButton(
@@ -169,53 +172,53 @@ class _AllergiesScreenState extends State<_AllergiesScreen> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Do you have any food allergies?',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Add allergens and select severity level.',
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Do you have any food allergies?',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Add allergens and select severity level.',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
 
-          // Severity selection
-          const Text(
-            'Severity:',
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: RadioListTile<AllergenSeverity>(
-                  title: const Text('Moderate'),
-                  value: AllergenSeverity.moderate,
-                  groupValue: _selectedSeverity,
-                  onChanged: (v) => setState(() => _selectedSeverity = v!),
+            // Severity selection
+            const Text(
+              'Severity:',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _SeverityButton(
+                    label: 'Moderate',
+                    isSelected: _selectedSeverity == AllergenSeverity.moderate,
+                    onTap: () => setState(() => _selectedSeverity = AllergenSeverity.moderate),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: RadioListTile<AllergenSeverity>(
-                  title: const Text('Severe'),
-                  value: AllergenSeverity.severe,
-                  groupValue: _selectedSeverity,
-                  onChanged: (v) => setState(() => _selectedSeverity = v!),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _SeverityButton(
+                    label: 'Severe',
+                    isSelected: _selectedSeverity == AllergenSeverity.severe,
+                    onTap: () => setState(() => _selectedSeverity = AllergenSeverity.severe),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+              ],
+            ),
+            const SizedBox(height: 12),
 
-          // Add allergen input
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
+            // Add allergen input
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                TextFormField(
                   controller: _controller,
                   decoration: const InputDecoration(
                     hintText: 'e.g., Peanuts, Shellfish',
@@ -223,38 +226,38 @@ class _AllergiesScreenState extends State<_AllergiesScreen> {
                   ),
                   onFieldSubmitted: (_) => _addAllergen(),
                 ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(onPressed: _addAllergen, child: const Text('Add')),
-            ],
-          ),
-          const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                ElevatedButton(onPressed: _addAllergen, child: const Text('Add')),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-          // Added allergens as chips
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: widget.state.selectedAllergens.map((allergen) {
-              return Chip(
-                label: Text(allergen.name),
-                deleteIcon: const Icon(Icons.close, size: 18),
-                onDeleted: () => _removeAllergen(allergen.name),
-                avatar: CircleAvatar(
-                  backgroundColor:
+            // Added allergens as chips
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: widget.state.selectedAllergens.map((allergen) {
+                return Chip(
+                  label: Text(allergen.name),
+                  deleteIcon: const Icon(Icons.close, size: 18),
+                  onDeleted: () => _removeAllergen(allergen.name),
+                  avatar: CircleAvatar(
+                    backgroundColor:
+                        allergen.severity == AllergenSeverity.severe.value
+                        ? Colors.red.shade100
+                        : Colors.orange.shade100,
+                    child: Text(
                       allergen.severity == AllergenSeverity.severe.value
-                      ? Colors.red.shade100
-                      : Colors.orange.shade100,
-                  child: Text(
-                    allergen.severity == AllergenSeverity.severe.value
-                        ? 'S'
-                        : 'M',
-                    style: const TextStyle(fontSize: 12),
+                          ? 'S'
+                          : 'M',
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
+                );
+              }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -302,91 +305,91 @@ class _CuisineScreenState extends State<_CuisineScreen> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'What are your cuisine preferences?',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Select the cuisines you enjoy.',
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-
-          // Preset cuisine chips (20 options)
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: OnboardingState.presetCuisines.map((cuisine) {
-              final isSelected = widget.state.cuisinePreferences.contains(
-                cuisine,
-              );
-              return FilterChip(
-                label: Text(cuisine),
-                selected: isSelected,
-                onSelected: (_) => _toggleCuisine(cuisine),
-                backgroundColor: Colors.white,
-                selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Custom cuisine entry
-          if (_showCustom)
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _customController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter custom cuisine',
-                      border: OutlineInputBorder(),
-                    ),
-                    onFieldSubmitted: (_) => _addCustomCuisine(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _addCustomCuisine,
-                  child: const Text('Add'),
-                ),
-              ],
-            )
-          else
-            TextButton.icon(
-              onPressed: () => setState(() => _showCustom = true),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Custom'),
-            ),
-
-          const Spacer(),
-
-          // Selected cuisines summary
-          if (widget.state.cuisinePreferences.isNotEmpty) ...[
-            const Divider(),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             const Text(
-              'Selected:',
-              style: TextStyle(fontWeight: FontWeight.w500),
+              'What are your cuisine preferences?',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
+            const Text(
+              'Select the cuisines you enjoy.',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+
+            // Preset cuisine chips (20 options)
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: widget.state.cuisinePreferences.map((c) {
-                return Chip(
-                  label: Text(c),
-                  deleteIcon: const Icon(Icons.close, size: 18),
-                  onDeleted: () => _toggleCuisine(c),
+              children: OnboardingState.presetCuisines.map((cuisine) {
+                final isSelected = widget.state.cuisinePreferences.contains(
+                  cuisine,
+                );
+                return FilterChip(
+                  label: Text(cuisine),
+                  selected: isSelected,
+                  onSelected: (_) => _toggleCuisine(cuisine),
+                  backgroundColor: Colors.white,
+                  selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
                 );
               }).toList(),
             ),
+
+            const SizedBox(height: 16),
+
+            // Custom cuisine entry
+            if (_showCustom)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _customController,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter custom cuisine',
+                        border: OutlineInputBorder(),
+                      ),
+                      onFieldSubmitted: (_) => _addCustomCuisine(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: _addCustomCuisine,
+                    child: const Text('Add'),
+                  ),
+                ],
+              )
+            else
+              TextButton.icon(
+                onPressed: () => setState(() => _showCustom = true),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Custom'),
+              ),
+
+            // Selected cuisines summary
+            if (widget.state.cuisinePreferences.isNotEmpty) ...[
+              const Divider(),
+              const Text(
+                'Selected:',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: widget.state.cuisinePreferences.map((c) {
+                  return Chip(
+                    label: Text(c),
+                    deleteIcon: const Icon(Icons.close, size: 18),
+                    onDeleted: () => _toggleCuisine(c),
+                  );
+                }).toList(),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -612,96 +615,96 @@ class _OccasionsScreenState extends State<_OccasionsScreen> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'What are your default occasions?',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Select the occasions you dine out for. These will be pre-selected on each visit.',
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-
-          // Pre-populated occasion chips
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: OnboardingState.defaultOccasions.map((occasion) {
-              final isSelected = widget.state.selectedOccasions.contains(
-                occasion,
-              );
-              return FilterChip(
-                label: Text(occasion),
-                selected: isSelected,
-                onSelected: (_) => _toggleOccasion(occasion),
-                backgroundColor: Colors.white,
-                selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Custom occasion entry
-          if (_showCustom)
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _customController,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Brunch with Friends',
-                      border: OutlineInputBorder(),
-                    ),
-                    onFieldSubmitted: (_) => _addCustomOccasion(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _addCustomOccasion,
-                  child: const Text('Add'),
-                ),
-              ],
-            )
-          else
-            Row(
-              children: [
-                const Icon(Icons.add, size: 18),
-                const SizedBox(width: 4),
-                TextButton(
-                  onPressed: () => setState(() => _showCustom = true),
-                  child: const Text('Add custom occasion'),
-                ),
-              ],
-            ),
-
-          const Spacer(),
-
-          // Selected occasions summary
-          if (widget.state.selectedOccasions.isNotEmpty) ...[
-            const Divider(),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             const Text(
-              'Selected:',
-              style: TextStyle(fontWeight: FontWeight.w500),
+              'What are your default occasions?',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
+            const Text(
+              'Select the occasions you dine out for. These will be pre-selected on each visit.',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+
+            // Pre-populated occasion chips
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: widget.state.selectedOccasions.map((o) {
-                return Chip(
-                  label: Text(o),
-                  deleteIcon: const Icon(Icons.close, size: 18),
-                  onDeleted: () => _toggleOccasion(o),
+              children: OnboardingState.defaultOccasions.map((occasion) {
+                final isSelected = widget.state.selectedOccasions.contains(
+                  occasion,
+                );
+                return FilterChip(
+                  label: Text(occasion),
+                  selected: isSelected,
+                  onSelected: (_) => _toggleOccasion(occasion),
+                  backgroundColor: Colors.white,
+                  selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
                 );
               }).toList(),
             ),
+
+            const SizedBox(height: 16),
+
+            // Custom occasion entry
+            if (_showCustom)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _customController,
+                      decoration: const InputDecoration(
+                        hintText: 'e.g., Brunch with Friends',
+                        border: OutlineInputBorder(),
+                      ),
+                      onFieldSubmitted: (_) => _addCustomOccasion(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: _addCustomOccasion,
+                    child: const Text('Add'),
+                  ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  const Icon(Icons.add, size: 18),
+                  const SizedBox(width: 4),
+                  TextButton(
+                    onPressed: () => setState(() => _showCustom = true),
+                    child: const Text('Add custom occasion'),
+                  ),
+                ],
+              ),
+
+            // Selected occasions summary
+            if (widget.state.selectedOccasions.isNotEmpty) ...[
+              const Divider(),
+              const Text(
+                'Selected:',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: widget.state.selectedOccasions.map((o) {
+                  return Chip(
+                    label: Text(o),
+                    deleteIcon: const Icon(Icons.close, size: 18),
+                    onDeleted: () => _toggleOccasion(o),
+                  );
+                }).toList(),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -710,5 +713,40 @@ class _OccasionsScreenState extends State<_OccasionsScreen> {
   void dispose() {
     _customController.dispose();
     super.dispose();
+  }
+}
+
+// -- Helper widget: severity selection button -----------------------------------
+
+/// A simple tappable button for allergen severity selection.
+///
+/// Replaces RadioListTile in a Row to avoid ListTile leading/content padding
+/// constraints that cause overflow when two are placed side-by-side in an Expanded Row.
+class _SeverityButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _SeverityButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected
+            ? Theme.of(context).primaryColor
+            : Theme.of(context).colorScheme.surface,
+        foregroundColor: isSelected
+            ? Colors.white
+            : Theme.of(context).colorScheme.onSurface,
+        elevation: isSelected ? 2 : 0,
+      ),
+      child: Text(label),
+    );
   }
 }
