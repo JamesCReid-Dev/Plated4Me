@@ -192,7 +192,7 @@ void main() {
     );
 
     testWidgets(
-      'Restaurant address is shown alongside name when multiple exist',
+      'Restaurant name is shown when selected from multiple',
       (tester) async {
         final container = makeContainer(
           restaurants: [
@@ -389,6 +389,132 @@ void main() {
           savedVisit.restaurantId,
           isNot(0),
           reason: 'AC-3: auto-selected restaurant should have valid ID',
+        );
+      },
+    );
+  });
+
+  // -- P4ME-54: Code quality regression tests --------------------------------
+
+  group('P4ME-54 — Code quality regression', () {
+    testWidgets(
+      'Single restaurant auto-select stores correct ID (setState moved out of build)',
+      (tester) async {
+        final container = makeContainer(
+          restaurants: [
+            Restaurant(name: 'Solo Spot', address: '100 Main St')..id = 42,
+          ],
+        );
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: QuickLogScreen()),
+          ),
+        );
+        // Allow time for async restaurant data to load and auto-select.
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 200));
+        await tester.pumpAndSettle();
+
+        // Set ratings to enable save.
+        final ratingNotifier = container.read(visitRatingProvider.notifier);
+        ratingNotifier.setFoodRating(4.0);
+        ratingNotifier.setValueRating(3.0);
+        ratingNotifier.setServiceRating(5.0);
+        ratingNotifier.setOverallRating(4.0);
+        await tester.pumpAndSettle();
+
+        // Tap save — should use auto-selected restaurant with ID=42.
+        await tester.tap(findSaveButton());
+        await tester.pumpAndSettle();
+
+        final visitNotifier = container.read(
+          visitsDataProvider.notifier,
+        ) as FakeVisitNotifier;
+        expect(visitNotifier.savedVisits.length, 1);
+        final savedVisit = visitNotifier.savedVisits.first;
+        expect(
+          savedVisit.restaurantId,
+          equals(42),
+          reason: 'P4ME-54: auto-selected restaurant ID should match (not 0 or converted)',
+        );
+      },
+    );
+
+    testWidgets(
+      'Multi-restaurant selection stores correct ID without .toInt() conversion',
+      (tester) async {
+        final container = makeContainer(
+          restaurants: [
+            Restaurant(name: 'Alpha', address: '1 A St')..id = 7,
+            Restaurant(name: 'Beta', address: '2 B Rd')..id = 99,
+          ],
+        );
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: QuickLogScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap on Beta (id=99).
+        await tester.tap(find.text('Beta').last);
+        await tester.pumpAndSettle();
+
+        // Set ratings to enable save.
+        final ratingNotifier = container.read(visitRatingProvider.notifier);
+        ratingNotifier.setFoodRating(4.0);
+        ratingNotifier.setValueRating(3.0);
+        ratingNotifier.setServiceRating(5.0);
+        ratingNotifier.setOverallRating(4.0);
+        await tester.pumpAndSettle();
+
+        // Tap save — should use restaurant with ID=99.
+        await tester.tap(findSaveButton());
+        await tester.pumpAndSettle();
+
+        final visitNotifier = container.read(
+          visitsDataProvider.notifier,
+        ) as FakeVisitNotifier;
+        expect(visitNotifier.savedVisits.length, 1);
+        final savedVisit = visitNotifier.savedVisits.first;
+        expect(
+          savedVisit.restaurantId,
+          equals(99),
+          reason: 'P4ME-54: selected restaurant ID should match exactly (no .toInt() needed)',
+        );
+      },
+    );
+
+    testWidgets(
+      'Restaurant name is shown in selector (test description fix for P4ME-54)',
+      (tester) async {
+        final container = makeContainer(
+          restaurants: [
+            Restaurant(name: 'Sushi Zen', address: '456 Oak Ave'),
+            Restaurant(name: 'Burger Barn', address: '789 Pine Rd'),
+          ],
+        );
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: QuickLogScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap to select first restaurant.
+        await tester.tap(find.text('Sushi Zen').last);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('Sushi Zen'),
+          findsWidgets,
+          reason: 'P4ME-54: restaurant name should be displayed in selector',
         );
       },
     );
