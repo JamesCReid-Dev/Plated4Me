@@ -301,12 +301,15 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
 
     await ref.read(visitsDataProvider.notifier).saveVisit(visit);
 
-    // Persist restaurant notes to the Restaurant entity (P4ME-50 fix).
+    // Persist restaurant notes to the selected Restaurant entity.
     if (restaurantNotesText != null && restaurantNotesText.isNotEmpty) {
       final repo = ref.read(restaurantRepositoryProvider);
       final restaurants = await repo.getAllRestaurants();
-      if (restaurants.isNotEmpty) {
-        final restaurant = restaurants.first;
+      if (restaurants.isNotEmpty && _selectedRestaurantId != null) {
+        final restaurant = restaurants.firstWhere(
+          (r) => r.id.toInt() == _selectedRestaurantId,
+          orElse: () => restaurants.first,
+        );
         restaurant.notes = restaurantNotesText;
         await repo.saveRestaurant(restaurant);
       }
