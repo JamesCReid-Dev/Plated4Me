@@ -367,4 +367,142 @@ void main() {
       },
     );
   });
+
+  // -- P4ME-53: Restaurant notes saved to selected restaurant, not first ------
+
+  group('P4ME-53 — Notes saved to selected restaurant when multiple exist', () {
+    testWidgets(
+      'notes saved to SELECTED restaurant (second), not first in list',
+      (tester) async {
+        final container = makeP4ME50Container();
+        final fakeRestaurantRepo = container.read(restaurantRepositoryProvider) as FakeRestaurantRepository;
+
+        // Seed a SECOND restaurant so we have multiple restaurants.
+        // The first seed is "Test Restaurant" (id auto-assigned). Add another with explicit id=2.
+        final r2 = Restaurant(name: 'Second Restaurant', address: '456 Oak Ave')..id = 2;
+        await fakeRestaurantRepo.saveRestaurant(r2);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: QuickLogScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Set ratings to enable save.
+        final ratingNotifier = container.read(visitRatingProvider.notifier);
+        ratingNotifier.setFoodRating(4.0);
+        ratingNotifier.setValueRating(3.0);
+        ratingNotifier.setServiceRating(5.0);
+        ratingNotifier.setOverallRating(4.0);
+
+        // Tap on the SECOND restaurant in the list to select it (not the auto-selected first).
+        final secondRestaurantFinder = find.text('Second Restaurant');
+        expect(secondRestaurantFinder, findsOneWidget, reason: 'Second restaurant should be visible in list');
+        await tester.tap(secondRestaurantFinder);
+        await tester.pumpAndSettle();
+
+        // Expand the Restaurant Notes accordion and set text.
+        final formNotifier = container.read(quickLogFormProvider.notifier);
+        formNotifier.toggleAccordion(4);
+        await tester.pumpAndSettle();
+
+        final formState = container.read(quickLogFormProvider);
+        formState.restaurantNotesController!.text = 'Notes for second restaurant only';
+
+        await tester.pumpAndSettle();
+
+        // Tap save.
+        await tester.tap(findSaveButtonP4ME50());
+        await tester.pumpAndSettle();
+
+        // P4ME-53: Notes should be saved to the SELECTED restaurant (id=2), not the first one.
+        final savedR2 = fakeRestaurantRepo.savedRestaurants.firstWhere(
+          (r) => r.id == 2,
+          orElse: () => throw Exception('Restaurant id=2 not found'),
+        );
+        expect(
+          savedR2.notes,
+          'Notes for second restaurant only',
+          reason: 'P4ME-53: notes should be saved to the SELECTED restaurant (id=2), not restaurants.first',
+        );
+
+        // The first restaurant's notes should remain unchanged.
+        final savedR1 = fakeRestaurantRepo.savedRestaurants.firstWhere(
+          (r) => r.id != 2,
+          orElse: () => throw Exception('First restaurant not found'),
+        );
+        expect(
+          savedR1.notes,
+          isNull,
+          reason: 'P4ME-53: first restaurant notes should NOT be modified',
+        );
+      },
+    );
+
+    testWidgets(
+      'with 3 restaurants: notes go to the third (selected), not first',
+      (tester) async {
+        final container = makeP4ME50Container();
+        final fakeRestaurantRepo = container.read(restaurantRepositoryProvider) as FakeRestaurantRepository;
+
+        // Add two more restaurants.
+        final r2 = Restaurant(name: 'Middle Restaurant')..id = 2;
+        await fakeRestaurantRepo.saveRestaurant(r2);
+        final r3 = Restaurant(name: 'Third Restaurant')..id = 3;
+        await fakeRestaurantRepo.saveRestaurant(r3);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: QuickLogScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Set ratings.
+        final ratingNotifier = container.read(visitRatingProvider.notifier);
+        ratingNotifier.setFoodRating(4.0);
+        ratingNotifier.setValueRating(3.0);
+        ratingNotifier.setServiceRating(5.0);
+        ratingNotifier.setOverallRating(4.0);
+
+        // Select the THIRD restaurant.
+        final thirdRestaurantFinder = find.text('Third Restaurant');
+        expect(thirdRestaurantFinder, findsOneWidget);
+        await tester.tap(thirdRestaurantFinder);
+        await tester.pumpAndSettle();
+
+        // Enter notes.
+        final formNotifier = container.read(quickLogFormProvider.notifier);
+        formNotifier.toggleAccordion(4);
+        await tester.pumpAndSettle();
+
+        final formState = container.read(quickLogFormProvider);
+        formState.restaurantNotesController!.text = 'Third restaurant notes';
+
+        await tester.pumpAndSettle();
+
+        // Save.
+        await tester.tap(findSaveButtonP4ME50());
+        await tester.pumpAndSettle();
+
+        // P4ME-53: Only the third restaurant should have notes.
+        final savedR3 = fakeRestaurantRepo.savedRestaurants.firstWhere(
+          (r) => r.id == 3,
+          orElse: () => throw Exception('Restaurant id=3 not found'),
+        );
+        expect(savedR3.notes, equals('Third restaurant notes'),
+            reason: 'P4ME-53: selected restaurant (id=3) should have the notes');
+
+        final savedR1 = fakeRestaurantRepo.savedRestaurants.firstWhere(
+          (r) => r.id != 3 && r.id != 2,
+          orElse: () => throw Exception('First restaurant not found'),
+        );
+        expect(savedR1.notes, isNull,
+            reason: 'P4ME-53: non-selected restaurants should NOT have notes');
+      },
+    );
+  });
 }
