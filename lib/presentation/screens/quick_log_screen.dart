@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plated4me/application/providers/allergy_safe_food_provider.dart';
 import 'package:plated4me/application/providers/data_providers.dart';
 import 'package:plated4me/application/providers/quick_log_form_provider.dart';
+import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
 import 'package:plated4me/application/providers/visit_rating_provider.dart';
 import 'package:plated4me/domain/entities/entities.dart';
 
@@ -300,6 +301,15 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
      ..journalEntries = List<JournalEntry>.from(form.journalEntries);
 
     await ref.read(visitsDataProvider.notifier).saveVisit(visit);
+
+    // P4ME-55: Refresh visitsListFilterProvider so BrowseScreen picks up new visit immediately.
+    // Wrapped in try/catch — refresh is an optimization; if it fails (e.g., Isar not initialized),
+    // the user can still pull-to-refresh on BrowseScreen without losing data.
+    try {
+      await ref.read(visitsListFilterProvider.notifier).refresh();
+    } catch (_) {
+      // Ignore — save already succeeded, user can refresh manually if needed.
+    }
 
     // Persist restaurant notes to the selected Restaurant entity.
     if (restaurantNotesText != null && restaurantNotesText.isNotEmpty) {
