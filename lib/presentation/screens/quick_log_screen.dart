@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plated4me/application/providers/allergy_safe_food_provider.dart';
 import 'package:plated4me/application/providers/data_providers.dart';
 import 'package:plated4me/application/providers/quick_log_form_provider.dart';
+import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
 import 'package:plated4me/application/providers/visit_rating_provider.dart';
 import 'package:plated4me/domain/entities/entities.dart';
 
@@ -299,20 +300,37 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
      ..lineItems = List<VisitLineItem>.from(form.lineItems)
      ..journalEntries = List<JournalEntry>.from(form.journalEntries);
 
-    await ref.read(visitsDataProvider.notifier).saveVisit(visit);
-
-    // Persist restaurant notes to the selected Restaurant entity.
+    // Persist restaurant notes to the selected Restaurant entity *before* saving the visit,
+    // so the restaurant data is up-to-date when the visit is persisted and displayed.
     if (restaurantNotesText != null && restaurantNotesText.isNotEmpty) {
       final repo = ref.read(restaurantRepositoryProvider);
       final restaurants = await repo.getAllRestaurants();
-      if (restaurants.isNotEmpty && _selectedRestaurantId != null) {
-        final restaurant = restaurants.firstWhere(
-          (r) => r.id.toInt() == _selectedRestaurantId,
-          orElse: () => restaurants.first,
-        );
-        restaurant.notes = restaurantNotesText;
-        await repo.saveRestaurant(restaurant);
+      if (_selectedRestaurantId == null || restaurants.isEmpty) {
+        // No selected restaurant or no restaurants in DB — nothing to attach notes to.
+      } else {
+        final matching = restaurants.where((r) => r.id.toInt() == _selectedRestaurantId).toList();
+        if (matching.isEmpty) {
+          // Selected restaurant was deleted or otherwise missing; skip saving notes rather
+          // than silently falling back to a different restaurant.
+          debugPrint(
+            'P4ME-55: selected restaurant id=$_selectedRestaurantId not found in DB, skipping notes save',
+          );
+        } else {
+          final restaurant = matching.first;
+          restaurant.notes = restaurantNotesText;
+          await repo.saveRestaurant(restaurant);
+        }
       }
+    }
+
+    await ref.read(visitsDataProvider.notifier).saveVisit(visit);
+
+    // Refresh visitsListFilterProvider so BrowseScreen picks up the new visit (with any notes) immediately.
+    try {
+      await ref.read(visitsListFilterProvider.notifier).refresh();
+    } catch (e) {
+      debugPrint('P4ME-55: failed to refresh visitsListFilterProvider after save: $e');
+      // Save already succeeded; user can pull-to-refresh on BrowseScreen if needed.
     }
 
     if (mounted) {
