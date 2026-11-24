@@ -101,6 +101,40 @@ void main() {
         expect(find.textContaining('Would you come back?'), findsWidgets);
       },
     );
+
+    testWidgets(
+      'no RenderFlex overflow on narrow viewport (P4ME-42)',
+      (tester) async {
+        // Simulate a narrow screen where the "Would you come back?" text + Yes/No pills would overflow.
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: defaultPrefsContainer,
+            child: MaterialApp(
+              home: Scaffold(
+                body: SizedBox(
+                  width: 300, // narrow viewport — triggers the P4ME-42 overflow on return intent Row
+                  child: const QuickLogScreen(),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Verify all return intent elements are present and visible.
+        expect(find.textContaining('Would you come back?'), findsOneWidget);
+        expect(find.text('Yes'), findsOneWidget);
+        expect(find.text('No'), findsOneWidget);
+
+        // Verify no RenderFlex overflow error was thrown during layout.
+        final exception = tester.takeException();
+        expect(
+          exception,
+          isNull,
+          reason: 'P4ME-42: No RenderFlex overflow on narrow viewport',
+        );
+      },
+    );
   });
 
   group('AC-7 — Save button', () {
