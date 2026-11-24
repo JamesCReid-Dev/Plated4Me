@@ -77,6 +77,36 @@ void main() {
       expect(restaurantList[0]['address'], isNull);
     });
 
+    // -- P4ME-51: Restaurant notes export ----------------------------------
+
+    test('P4ME-51: exports restaurant with non-null notes', () {
+      final restaurants = [Restaurant(name: 'Test')..notes = 'Great pasta'];
+      final json = exportToJson(
+        restaurants: restaurants,
+        visits: [],
+        preferences: null,
+        allergens: [],
+      );
+      final parsed = _parseJson(json) as Map<String, dynamic>;
+      final restaurantList = parsed['restaurants'] as List<dynamic>;
+
+      expect(restaurantList[0]['notes'], equals('Great pasta'));
+    });
+
+    test('P4ME-51: exports restaurant with null notes', () {
+      final restaurants = [Restaurant(name: 'Test')];
+      final json = exportToJson(
+        restaurants: restaurants,
+        visits: [],
+        preferences: null,
+        allergens: [],
+      );
+      final parsed = _parseJson(json) as Map<String, dynamic>;
+      final restaurantList = parsed['restaurants'] as List<dynamic>;
+
+      expect(restaurantList[0]['notes'], isNull);
+    });
+
     // -- Visit export ------------------------------------------------------
 
     test('AC-5: exports visit ratings', () {
