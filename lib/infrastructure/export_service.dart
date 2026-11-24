@@ -38,6 +38,7 @@ Map<String, dynamic> _serializeRestaurant(Restaurant r) {
     'id': r.id,
     'name': r.name,
     'address': r.address,
+    'notes': r.notes,
     'createdAt': r.createdAt.toIso8601String(),
     'updatedAt': r.updatedAt.toIso8601String(),
   };
