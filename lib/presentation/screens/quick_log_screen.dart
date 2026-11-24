@@ -103,13 +103,20 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
     final restaurantsAsync = ref.watch(restaurantDataProvider);
 
     // Auto-select when there's exactly one restaurant (common case).
-    restaurantsAsync.whenData((restaurants) {
-      if (mounted &&
-          restaurants.length == 1 &&
-          _selectedRestaurantId == null) {
-        setState(() => _selectedRestaurantId = restaurants.first.id.toInt());
-      }
-    });
+    // Defer setState via addPostFrameCallback to avoid calling it from within build.
+    if (_selectedRestaurantId == null) {
+      restaurantsAsync.whenData((restaurants) {
+        if (mounted &&
+            restaurants.length == 1 &&
+            _selectedRestaurantId == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _selectedRestaurantId == null) {
+              setState(() => _selectedRestaurantId = restaurants.first.id);
+            }
+          });
+        }
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -147,7 +154,7 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
                           children: restaurants.map((restaurant) {
                             final isSelected = _selectedRestaurantId == restaurant.id;
                             return InkWell(
-                              onTap: () => setState(() => _selectedRestaurantId = restaurant.id.toInt()),
+                              onTap: () => setState(() => _selectedRestaurantId = restaurant.id),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 2),
                                 child: Row(
@@ -308,7 +315,7 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
       if (_selectedRestaurantId == null || restaurants.isEmpty) {
         // No selected restaurant or no restaurants in DB — nothing to attach notes to.
       } else {
-        final matching = restaurants.where((r) => r.id.toInt() == _selectedRestaurantId).toList();
+        final matching = restaurants.where((r) => r.id == _selectedRestaurantId).toList();
         if (matching.isEmpty) {
           // Selected restaurant was deleted or otherwise missing; skip saving notes rather
           // than silently falling back to a different restaurant.
@@ -369,7 +376,7 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
               await ref.read(restaurantDataProvider.notifier).saveRestaurant(newRestaurant);
 
               // Auto-select the newly created restaurant.
-              setState(() => _selectedRestaurantId = newRestaurant.id.toInt());
+              setState(() => _selectedRestaurantId = newRestaurant.id);
 
               if (mounted && Navigator.of(ctx).canPop()) {
                 Navigator.pop(ctx);
