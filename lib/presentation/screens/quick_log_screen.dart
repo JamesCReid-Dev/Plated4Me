@@ -77,6 +77,9 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
   /// Currently selected restaurant ID (null until user picks one).
   int? _selectedRestaurantId;
 
+  /// Tracks whether an auto-select post-frame callback is pending.
+  bool _autoSelectScheduled = false;
+
   @override
   void initState() {
     super.initState();
@@ -104,11 +107,14 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
 
     // Auto-select when there's exactly one restaurant (common case).
     // Defer setState via addPostFrameCallback to avoid calling it from within build.
-    if (_selectedRestaurantId == null) {
+    // _autoSelectScheduled prevents redundant callback registration if the provider
+    // emits multiple times before the pending callback fires.
+    if (_selectedRestaurantId == null && !_autoSelectScheduled) {
       restaurantsAsync.whenData((restaurants) {
         if (mounted &&
             restaurants.length == 1 &&
             _selectedRestaurantId == null) {
+          _autoSelectScheduled = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && _selectedRestaurantId == null) {
               setState(() => _selectedRestaurantId = restaurants.first.id);
