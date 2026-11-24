@@ -14,6 +14,7 @@ import 'package:plated4me/domain/repositories/allergy_safe_food_repository.dart'
 import 'package:plated4me/domain/repositories/restaurant_repository.dart';
 import 'package:plated4me/domain/repositories/visit_repository.dart';
 import 'package:plated4me/presentation/screens/restaurant_detail_screen.dart';
+import 'package:plated4me/presentation/widgets/restaurant_notes_widget.dart';
 
 // -- Test data helpers ---------------------------------------------------------
 
@@ -236,30 +237,31 @@ void main() {
         // Wait for the General Notes header to appear.
         await waitForData(tester, 'General Notes');
 
-        // Notes appear in the General Notes TextField.
-        final textField = find.byType(TextField);
-        expect(textField, findsOneWidget);
-        final tf = tester.widget<TextField>(textField);
-        expect(tf.controller?.text, 'Old note');
+        // Notes appear via RestaurantNotesDisplayWidget.
+        expect(find.text('Old note'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'notes field is editable',
+      'notes field is editable via edit dialog',
       (tester) async {
         final restaurant = _restaurant(notes: 'Old note');
         await tester.pumpWidget(buildScreen(restaurant));
         await waitForData(tester, 'Old note');
 
-        // Find the text field and enter new text.
+        // Open the edit dialog.
+        await tester.tap(find.text('Edit Notes'));
+        await tester.pumpAndSettle();
+
+        // Find the text field in the dialog and enter new text.
         final textField = find.byType(TextField);
         expect(textField, findsOneWidget);
         await tester.enterText(textField, 'Updated note');
+        await tester.tap(find.text('Save'));
         await tester.pumpAndSettle();
 
-        // Verify the TextField now contains the updated text.
-        final textFieldWidget = tester.widget<TextField>(textField);
-        expect(textFieldWidget.controller?.text, 'Updated note');
+        // Verify the dialog is closed and updated text is displayed.
+        expect(find.text('Updated note'), findsOneWidget);
       },
     );
 
@@ -271,14 +273,16 @@ void main() {
         await tester.pumpWidget(buildScreen(restaurant, restaurantRepo: repo));
         await waitForData(tester, 'Initial note');
 
-        final textField = find.byType(TextField).first;
+        // Open dialog, enter new text, save.
+        await tester.tap(find.text('Edit Notes'));
+        await tester.pumpAndSettle();
+        final textField = find.byType(TextField);
         await tester.enterText(textField, 'Persisted note');
-        // Wait for onChanged → updateNotes → saveRestaurant → loadDetail cycle.
+        await tester.tap(find.text('Save'));
         await tester.pumpAndSettle();
 
-        // After save and reload, the new text should be visible in the TextField.
-        final textFieldWidget = tester.widget<TextField>(textField);
-        expect(textFieldWidget.controller?.text, 'Persisted note');
+        // After save and reload, the new text should be visible.
+        expect(find.text('Persisted note'), findsOneWidget);
       },
     );
   });
@@ -359,6 +363,149 @@ void main() {
         expect(find.text('Some notes'), findsOneWidget);
         // Empty state for visit history.
         expect(find.text('No visits logged yet'), findsOneWidget);
+      },
+    );
+  });
+
+  // -- P4ME-52: RestaurantNotesDisplayWidget wired into screen -----------------
+
+  group('P4ME-52 — RestaurantNotesDisplayWidget in RestaurantDetailScreen', () {
+    testWidgets(
+      'uses RestaurantNotesDisplayWidget (not inline _GeneralNotesSection)',
+      (tester) async {
+        final restaurant = _restaurant(notes: 'Test notes');
+        await tester.pumpWidget(buildScreen(restaurant));
+
+        // Wait for data to load.
+        await waitForData(tester, 'General Notes');
+
+        // The screen should use RestaurantNotesDisplayWidget.
+        expect(find.byType(RestaurantNotesDisplayWidget), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'displays existing notes via RestaurantNotesDisplayWidget',
+      (tester) async {
+        final restaurant = _restaurant(notes: 'Existing note content');
+        await tester.pumpWidget(buildScreen(restaurant));
+
+        // Wait for data to load.
+        await waitForData(tester, 'General Notes');
+
+        // Notes should be visible via the widget.
+        expect(find.text('Existing note content'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'shows empty placeholder when notes are null',
+      (tester) async {
+        final restaurant = _restaurant(notes: null);
+        await tester.pumpWidget(buildScreen(restaurant));
+
+        // Wait for data to load.
+        await waitForData(tester, 'General Notes');
+
+        // Empty state placeholder should be visible.
+        expect(find.text('Add notes about this restaurant'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'edit button opens dialog when notes exist',
+      (tester) async {
+        final restaurant = _restaurant(notes: 'Some note');
+        await tester.pumpWidget(buildScreen(restaurant));
+
+        // Wait for data to load.
+        await waitForData(tester, 'General Notes');
+
+        // Tap the edit button.
+        final editButton = find.text('Edit Notes');
+        expect(editButton, findsOneWidget);
+        await tester.tap(editButton);
+        await tester.pumpAndSettle();
+
+        // Dialog should be visible with a TextField.
+        expect(find.byType(TextField), findsWidgets);
+      },
+    );
+
+    testWidgets(
+      'edit button opens dialog when notes are empty',
+      (tester) async {
+        final restaurant = _restaurant(notes: null);
+        await tester.pumpWidget(buildScreen(restaurant));
+
+        // Wait for data to load.
+        await waitForData(tester, 'General Notes');
+
+        // Tap the edit button.
+        final editButton = find.text('Edit Notes');
+        expect(editButton, findsOneWidget);
+        await tester.tap(editButton);
+        await tester.pumpAndSettle();
+
+        // Dialog should be visible with a TextField pre-filled with empty text.
+        expect(find.byType(TextField), findsWidgets);
+      },
+    );
+
+    testWidgets(
+      'saving edited notes persists them to the restaurant',
+      (tester) async {
+        final restaurant = _restaurant(notes: 'Original note');
+        final repo = FakeRestaurantRepo(restaurant);
+        await tester.pumpWidget(buildScreen(restaurant, restaurantRepo: repo));
+
+        // Wait for data to load.
+        await waitForData(tester, 'General Notes');
+
+        // Tap edit button and enter new text.
+        final editButton = find.text('Edit Notes');
+        await tester.tap(editButton);
+        await tester.pumpAndSettle();
+
+        // Enter new notes in the dialog's TextField and save.
+        final textField = find.byType(TextField);
+        await tester.enterText(textField, 'Updated via dialog');
+        await tester.tap(find.text('Save'));
+
+        // Wait for save to complete.
+        await tester.pumpAndSettle();
+
+        // Verify the saved restaurant has updated notes.
+        final saved = await repo.getRestaurantById(restaurant.id);
+        expect(saved?.notes, 'Updated via dialog');
+      },
+    );
+
+    testWidgets(
+      'canceling edit dialog discards changes',
+      (tester) async {
+        final restaurant = _restaurant(notes: 'Original note');
+        final repo = FakeRestaurantRepo(restaurant);
+        await tester.pumpWidget(buildScreen(restaurant, restaurantRepo: repo));
+
+        // Wait for data to load.
+        await waitForData(tester, 'General Notes');
+
+        // Tap edit button and enter new text.
+        final editButton = find.text('Edit Notes');
+        await tester.tap(editButton);
+        await tester.pumpAndSettle();
+
+        // Enter new notes in the dialog's TextField.
+        final textField = find.byType(TextField);
+        await tester.enterText(textField, 'Discarded change');
+
+        // Tap Cancel to dismiss dialog without saving.
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+
+        // Original notes should still be displayed.
+        expect(find.text('Original note'), findsOneWidget);
       },
     );
   });
