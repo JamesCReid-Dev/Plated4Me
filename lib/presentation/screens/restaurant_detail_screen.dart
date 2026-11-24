@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plated4me/application/providers/restaurant_detail_provider.dart';
 import 'package:plated4me/domain/entities/entities.dart';
+import 'package:plated4me/presentation/widgets/restaurant_notes_widget.dart';
 
 // -- Screen --------------------------------------------------------------------
 
@@ -26,23 +27,10 @@ class RestaurantDetailScreen extends ConsumerStatefulWidget {
 
 class _RestaurantDetailScreenState
     extends ConsumerState<RestaurantDetailScreen> {
-  late final TextEditingController _notesController;
-
   @override
   void initState() {
     super.initState();
-    _notesController = TextEditingController();
     ref.read(restaurantDetailProvider.notifier).loadDetail(widget.restaurantId);
-  }
-
-  @override
-  void dispose() {
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  void _saveNotes(String value) {
-    ref.read(restaurantDetailProvider.notifier).updateNotes(value);
   }
 
   @override
@@ -74,8 +62,8 @@ class _RestaurantDetailScreenState
 
                 const SizedBox(height: 24),
 
-                // AC-3: General notes
-                _buildGeneralNotes(detail.restaurant.notes ?? '', _saveNotes),
+                // P4ME-52 / AC-3: General notes with edit capability
+                _buildNotesSection(context, detail.restaurant),
 
                 const SizedBox(height: 24),
 
@@ -178,71 +166,71 @@ class _ExpandableSafeFoodsListState extends State<_ExpandableSafeFoodsList> {
   }
 }
 
-// -- General notes (AC-3) -----------------------------------------------------
+// -- General notes (AC-3 / P4ME-52) -------------------------------------------
 
-/// Editable general notes section.
-class _GeneralNotesSection extends StatefulWidget {
-  final String initialNotes;
-  final ValueChanged<String> onSave;
-
-  const _GeneralNotesSection({
-    required this.initialNotes,
-    required this.onSave,
-  });
-
-  @override
-  State<_GeneralNotesSection> createState() => _GeneralNotesSectionState();
+/// Notes section with display widget and edit button.
+Widget _buildNotesSection(BuildContext context, Restaurant restaurant) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'General Notes',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          FilledButton.tonalIcon(
+            onPressed: () => _showNotesDialog(context, restaurant),
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: const Text('Edit Notes'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      RestaurantNotesDisplayWidget(restaurant: restaurant),
+    ],
+  );
 }
 
-class _GeneralNotesSectionState extends State<_GeneralNotesSection> {
-  late TextEditingController _controller;
+/// Shows a dialog for editing restaurant notes.
+void _showNotesDialog(BuildContext context, Restaurant restaurant) {
+  final controller = TextEditingController(text: restaurant.notes ?? '');
+  final container = ProviderScope.containerOf(context);
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialNotes);
-  }
-
-  @override
-  void didUpdateWidget(_GeneralNotesSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (_controller.text != widget.initialNotes) {
-      _controller.text = widget.initialNotes;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'General Notes',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+  showDialog(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Edit Notes'),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        maxLines: 8,
+        decoration: const InputDecoration(
+          hintText: 'Add notes about this restaurant',
+          border: OutlineInputBorder(),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _controller,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Add notes about this restaurant',
-          ),
-          onChanged: widget.onSave,
+        keyboardType: TextInputType.multiline,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final notes = controller.text.trim();
+            if (notes != restaurant.notes) {
+              container.read(restaurantDetailProvider.notifier).updateNotes(notes);
+            }
+            Navigator.of(dialogContext).pop();
+          },
+          child: const Text('Save'),
         ),
       ],
-    );
-  }
-}
-
-Widget _buildGeneralNotes(String notes, ValueChanged<String> onSave) {
-  return _GeneralNotesSection(initialNotes: notes, onSave: onSave);
+    ),
+  );
 }
 
 // -- Visit history (AC-4 / AC-6) ----------------------------------------------
