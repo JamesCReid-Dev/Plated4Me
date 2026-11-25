@@ -33,6 +33,12 @@ class Restaurant {
   /// Last time any field on this restaurant was updated.
   DateTime updatedAt = DateTime.now();
 
+  /// Manual pin override: when true, always show in favorites regardless of auto-criteria.
+  bool isPinned = false;
+
+  /// Manual unpin override: when true, always hide from favorites regardless of auto-criteria.
+  bool isUnpinned = false;
+
   // -- Sub-collections --------------------------------------------------------
   /// Allergy-safe foods associated with this restaurant (FR-5).
   @ignore
