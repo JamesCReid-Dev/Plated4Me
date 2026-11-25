@@ -27,18 +27,28 @@ const RestaurantSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'name': PropertySchema(
+    r'isPinned': PropertySchema(
       id: 2,
+      name: r'isPinned',
+      type: IsarType.bool,
+    ),
+    r'isUnpinned': PropertySchema(
+      id: 3,
+      name: r'isUnpinned',
+      type: IsarType.bool,
+    ),
+    r'name': PropertySchema(
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
     r'notes': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'notes',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -127,9 +137,11 @@ void _restaurantSerialize(
 ) {
   writer.writeString(offsets[0], object.address);
   writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeString(offsets[2], object.name);
-  writer.writeString(offsets[3], object.notes);
-  writer.writeDateTime(offsets[4], object.updatedAt);
+  writer.writeBool(offsets[2], object.isPinned);
+  writer.writeBool(offsets[3], object.isUnpinned);
+  writer.writeString(offsets[4], object.name);
+  writer.writeString(offsets[5], object.notes);
+  writer.writeDateTime(offsets[6], object.updatedAt);
 }
 
 Restaurant _restaurantDeserialize(
@@ -140,12 +152,14 @@ Restaurant _restaurantDeserialize(
 ) {
   final object = Restaurant(
     address: reader.readStringOrNull(offsets[0]),
-    name: reader.readString(offsets[2]),
+    name: reader.readString(offsets[4]),
   );
   object.createdAt = reader.readDateTime(offsets[1]);
   object.id = id;
-  object.notes = reader.readStringOrNull(offsets[3]);
-  object.updatedAt = reader.readDateTime(offsets[4]);
+  object.isPinned = reader.readBool(offsets[2]);
+  object.isUnpinned = reader.readBool(offsets[3]);
+  object.notes = reader.readStringOrNull(offsets[5]);
+  object.updatedAt = reader.readDateTime(offsets[6]);
   return object;
 }
 
@@ -161,10 +175,14 @@ P _restaurantDeserializeProp<P>(
     case 1:
       return (reader.readDateTime(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -924,6 +942,26 @@ extension RestaurantQueryFilter
     });
   }
 
+  QueryBuilder<Restaurant, Restaurant, QAfterFilterCondition> isPinnedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isPinned',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Restaurant, Restaurant, QAfterFilterCondition> isUnpinnedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isUnpinned',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Restaurant, Restaurant, QAfterFilterCondition> nameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1288,6 +1326,30 @@ extension RestaurantQuerySortBy
     });
   }
 
+  QueryBuilder<Restaurant, Restaurant, QAfterSortBy> sortByIsPinned() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPinned', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Restaurant, Restaurant, QAfterSortBy> sortByIsPinnedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPinned', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Restaurant, Restaurant, QAfterSortBy> sortByIsUnpinned() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isUnpinned', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Restaurant, Restaurant, QAfterSortBy> sortByIsUnpinnedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isUnpinned', Sort.desc);
+    });
+  }
+
   QueryBuilder<Restaurant, Restaurant, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1363,6 +1425,30 @@ extension RestaurantQuerySortThenBy
     });
   }
 
+  QueryBuilder<Restaurant, Restaurant, QAfterSortBy> thenByIsPinned() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPinned', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Restaurant, Restaurant, QAfterSortBy> thenByIsPinnedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPinned', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Restaurant, Restaurant, QAfterSortBy> thenByIsUnpinned() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isUnpinned', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Restaurant, Restaurant, QAfterSortBy> thenByIsUnpinnedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isUnpinned', Sort.desc);
+    });
+  }
+
   QueryBuilder<Restaurant, Restaurant, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1415,6 +1501,18 @@ extension RestaurantQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Restaurant, Restaurant, QDistinct> distinctByIsPinned() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isPinned');
+    });
+  }
+
+  QueryBuilder<Restaurant, Restaurant, QDistinct> distinctByIsUnpinned() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isUnpinned');
+    });
+  }
+
   QueryBuilder<Restaurant, Restaurant, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1453,6 +1551,18 @@ extension RestaurantQueryProperty
   QueryBuilder<Restaurant, DateTime, QQueryOperations> createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<Restaurant, bool, QQueryOperations> isPinnedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isPinned');
+    });
+  }
+
+  QueryBuilder<Restaurant, bool, QQueryOperations> isUnpinnedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isUnpinned');
     });
   }
 

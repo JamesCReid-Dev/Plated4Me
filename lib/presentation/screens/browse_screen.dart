@@ -3,6 +3,7 @@
 /// Shows visit history with restaurant name, date, composite score bar,
 /// and return intent pill. Filter icon opens bottom sheet with filter options.
 /// Search bar at top for full-text search across all visit data.
+/// Favorites section at top when auto-surfaced criteria are met (AC-4).
 /// Empty state shown when no visits exist.
 ///
 /// P4ME-17 — S10 Filterable Visit Card List.
@@ -11,9 +12,12 @@
 /// P4ME-18 — Full-Text Search.
 /// Covers AC-1 (search bar), AC-2 (cross-field search), AC-3 (ranking),
 /// AC-4 (highlighting), AC-5 (debounce + keyboard), AC-6 (clear), AC-7 (no results).
+/// P4ME-20 — S13 Favorites Collection.
+/// Covers AC-4 (favorites section at top of Browse list).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plated4me/application/providers/favorites_provider.dart';
 import 'package:plated4me/application/providers/search_provider.dart';
 import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
 import 'package:plated4me/domain/entities/entities.dart';
@@ -46,47 +50,57 @@ class BrowseScreen extends ConsumerWidget {
           // AC-1: Search bar at top of list view.
           const searchBar = SearchBarWidget();
 
+          // AC-4: Favorites section at top when auto-surfaced criteria are met.
+          final favorites = ref.watch(favoritesProvider);
+
           // Determine what to display based on search state.
           if (searchState.searchResults == null) {
             // No active search — show filtered visits.
-            if (visits.isEmpty) {
-              return Column(
+            if (visits.isEmpty && favorites.isEmpty) {
+              return const Column(
                 children: [
                   searchBar,
-                  const Expanded(child: _EmptyState()),
+                  Expanded(child: _EmptyState()),
                 ],
               );
             }
-            return Column(
-              children: [
-                searchBar,
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async =>
-                        ref.read(visitsListFilterProvider.notifier).refresh(),
-                    child: ListView.separated(
-                      itemCount: visits.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final fv = visits[index];
-                        return VisitCard(
-                          filteredVisit: fv,
-                        );
-                      },
-                    ),
+
+            final List<Widget> bodyChildren = [searchBar];
+
+            // AC-4: Show favorites section at top.
+            if (favorites.isNotEmpty) {
+              bodyChildren.add(_FavoritesSection(favorites, ref));
+            }
+
+            bodyChildren.add(
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async =>
+                      ref.read(visitsListFilterProvider.notifier).refresh(),
+                  child: ListView.separated(
+                    itemCount: visits.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final fv = visits[index];
+                      return VisitCard(
+                        filteredVisit: fv,
+                      );
+                    },
                   ),
                 ),
-              ],
+              ),
             );
+
+            return Column(children: bodyChildren);
           }
 
           // Active search — show ranked results.
           if (searchState.searchResults!.isEmpty) {
             // AC-7: No matches centered message.
-            return Column(
+            return const Column(
               children: [
                 searchBar,
-                const Expanded(child: _NoMatchesState()),
+                Expanded(child: _NoMatchesState()),
               ],
             );
           }
@@ -369,6 +383,70 @@ class _NoMatchesState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// AC-4: Favorites section displayed at top of Browse list.
+class _FavoritesSection extends StatelessWidget {
+  final List<Restaurant> favorites;
+  final WidgetRef ref;
+
+  const _FavoritesSection(this.favorites, this.ref);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Icon(Icons.favorite, size: 18, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Favorites',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            constraints: const BoxConstraints(maxHeight: 50),
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: favorites.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final restaurant = favorites[index];
+                return _FavoriteChip(restaurant, ref);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Individual favorite chip with pin toggle.
+class _FavoriteChip extends StatelessWidget {
+  final Restaurant restaurant;
+  final WidgetRef ref;
+
+  const _FavoriteChip(this.restaurant, this.ref);
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      avatar: Icon(Icons.favorite, size: 16, color: Theme.of(context).colorScheme.primary),
+      label: Text(restaurant.name),
+      onSelected: (_) => ref.read(favoritesProvider.notifier).togglePin(restaurant.id),
     );
   }
 }
