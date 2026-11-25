@@ -4,7 +4,6 @@
 /// with manual pin/unpin overrides persisted to the Restaurant entity.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
 import 'package:plated4me/application/providers/data_providers.dart';
 import 'package:plated4me/application/services/favorites_service.dart';
 import 'package:plated4me/domain/entities/entities.dart';
@@ -49,7 +48,7 @@ class FavoritesNotifier extends Notifier<List<Restaurant>> {
   }
 
   /// Toggles the pin state of a restaurant (AC-3).
-  Future<void> togglePin(Id restaurantId) async {
+  Future<void> togglePin(int restaurantId) async {
     final restaurantsState = ref.read(restaurantDataProvider);
     if (restaurantsState is! AsyncData) return;
 
@@ -58,13 +57,18 @@ class FavoritesNotifier extends Notifier<List<Restaurant>> {
     if (index < 0) return;
 
     final restaurant = restaurants[index];
-    // Toggle: pinned → not pinned, not pinned → pinned.
+    // Toggle: pinned → unpinned (hide), unpinned → pinned (show).
     final newRestaurant = Restaurant(
       name: restaurant.name,
       address: restaurant.address,
     )..id = restaurant.id;
-    newRestaurant.isPinned = !restaurant.isPinned;
-    newRestaurant.isUnpinned = false;
+    if (restaurant.isPinned) {
+      newRestaurant.isPinned = false;
+      newRestaurant.isUnpinned = true;
+    } else {
+      newRestaurant.isPinned = true;
+      newRestaurant.isUnpinned = false;
+    }
 
     await _restaurants.saveRestaurant(newRestaurant);
   }
