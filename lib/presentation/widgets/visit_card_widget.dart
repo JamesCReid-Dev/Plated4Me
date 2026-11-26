@@ -104,6 +104,26 @@ class VisitCard extends StatelessWidget {
                       ),
                 ),
 
+                // AC-3: Occasion tags as FilterChips.
+                if (visit.occasions.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: visit.occasions.map<Widget>((occasion) {
+                      return FilterChip(
+                        label: Text(occasion),
+                        labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        visualDensity: VisualDensity.compact,
+                        onSelected: (_) {},
+                      );
+                    }).toList(),
+                  ),
+                ],
+
                 const SizedBox(height: 8),
 
                 ClipRRect(
