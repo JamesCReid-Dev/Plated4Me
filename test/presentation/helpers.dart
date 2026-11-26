@@ -22,6 +22,9 @@ ProviderContainer get defaultPrefsContainer => ProviderContainer(
     visitsListFilterProvider.overrideWith(() {
       return _FakeVisitFilterNotifier([]);
     }),
+    visitsDataProvider.overrideWith(() {
+      return FakeVisitDataProvider();
+    }),
   ],
 );
 
@@ -76,6 +79,21 @@ class _FakeVisitFilterNotifier extends VisitListFilterNotifier {
 
   @override
   Future<void> refresh() async {}
+}
+
+/// Fake notifier that returns a fixed list of visits and handles bulk clear.
+class FakeVisitDataProvider extends VisitDataProvider {
+  @override
+  Future<List<Visit>> build() => Future.value([]);
+
+  @override
+  Future<void> refresh() async {}
+
+  @override
+  Future<int> clearAllBlacklistedVisits() async {
+    state = const AsyncData([]);
+    return 0;
+  }
 }
 
 /// Builds a MaterialApp with the given home widget.

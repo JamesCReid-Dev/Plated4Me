@@ -121,6 +121,19 @@ class VisitDataProvider extends AsyncNotifier<List<Visit>> {
       state = AsyncError(e, st);
     }
   }
+
+  /// Bulk deletes all blacklisted visits and refreshes the list.
+  /// Returns the number of visits deleted.
+  Future<int> clearAllBlacklistedVisits() async {
+    try {
+      final count = await _repository.bulkDeleteBlacklistedVisits();
+      state = AsyncData(await fetchAll());
+      return count;
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
 }
 
 /// Provider for [Visit] data.
