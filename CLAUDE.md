@@ -74,7 +74,7 @@ Gates MUST be followed in strict order. Each gate's prerequisites must be comple
 - **STEP 2 — NEVER SKIP STEP 1:** The story must be in "In Review" status BEFORE committing, pushing, or creating a PR. Skipping this step is a process violation.
 - **STEP 3:** Commit changes → push branch → create PR (via `gh pr create`).
 - No Jira comment needed for steps 2–3 — the PR link is created as part of gate execution.
-
+- **STEP 4:** execute Claude code review (/code-review <PR#>) on this PR and document results in a comment for this story.
 **Gate 5.5:** Rebase onto latest main (resolve conflicts locally)
 - No Jira comment needed — rebase is a mechanical operation.
 

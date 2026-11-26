@@ -57,6 +57,17 @@ String _valueSemanticLabel(int v, int s) => 'Value, $v out of $s';
 String _serviceSemanticLabel(int v, int s) => 'Service, $v out of $s';
 String _overallSemanticLabel(int v, int s) => 'Overall, $v out of $s';
 
+// -- Blacklist reason categories (AC-2) ----------------------------------------
+
+/// Suggested blacklist reason categories (AC-2).
+const List<String> _blacklistReasons = [
+  'Poor Food',
+  'Bad Service',
+  'Overpriced',
+  'Allergy Issue',
+  'Other',
+];
+
 // -- Screen --------------------------------------------------------------------
 
 /// Quick Log screen with four rating sliders and save button.
@@ -71,8 +82,14 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
   /// Current rating scale from user preferences (5 or 10).
   int _scale = 5;
 
-  /// Accordion expanded state: [Meal, LineItems, Journal, AllergySafe, Notes]
-  final List<bool> _expanded = [false, false, false, false, false];
+  /// Accordion expanded state: [Meal, LineItems, Journal, AllergySafe, Notes, Blacklist]
+  final List<bool> _expanded = [false, false, false, false, false, false];
+
+  /// Whether this visit is being blacklisted during logging.
+  bool _blacklisted = false;
+
+  /// Selected blacklist reason category (null when not blacklisted or "Other" with no custom text).
+  String? _blacklistReason;
 
   /// Currently selected restaurant ID (null until user picks one).
   int? _selectedRestaurantId;
@@ -240,6 +257,10 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
                       expanded: _expanded,
                       onToggle: _toggleAccordion,
                       form: ref.read(quickLogFormProvider),
+                      blacklisted: _blacklisted,
+                      onBlacklistedChanged: (v) => setState(() => _blacklisted = v),
+                      blacklistReason: _blacklistReason,
+                      onReasonSelected: (r) => setState(() => _blacklistReason = r),
                     ),
                   ],
               ),
@@ -311,7 +332,9 @@ class _QuickLogScreenState extends ConsumerState<QuickLogScreen> {
          ? null
          : employeeNameText
      ..lineItems = List<VisitLineItem>.from(form.lineItems)
-     ..journalEntries = List<JournalEntry>.from(form.journalEntries);
+     ..journalEntries = List<JournalEntry>.from(form.journalEntries)
+     ..blacklisted = _blacklisted
+     ..blacklistReason = _blacklistReason;
 
     // Persist restaurant notes to the selected Restaurant entity *before* saving the visit,
     // so the restaurant data is up-to-date when the visit is persisted and displayed.
@@ -617,11 +640,19 @@ class _OptionalSectionsAccordion extends StatelessWidget {
   final List<bool> expanded;
   final ValueChanged<int> onToggle;
   final QuickLogFormData form;
+  final bool blacklisted;
+  final ValueChanged<bool> onBlacklistedChanged;
+  final String? blacklistReason;
+  final ValueChanged<String?> onReasonSelected;
 
   const _OptionalSectionsAccordion({
     required this.expanded,
     required this.onToggle,
     required this.form,
+    required this.blacklisted,
+    required this.onBlacklistedChanged,
+    required this.blacklistReason,
+    required this.onReasonSelected,
   });
 
   @override
@@ -676,6 +707,21 @@ class _OptionalSectionsAccordion extends StatelessWidget {
           onToggle: () => onToggle(4),
           child: _RestaurantNotesSection(form: form),
         ),
+
+        const SizedBox(height: 8),
+
+        // Section 5: Blacklist experience (AC-1, AC-2)
+        _AccordionSection(
+          title: 'Blacklist Experience',
+          isExpanded: expanded[5],
+          onToggle: () => onToggle(5),
+          child: _BlacklistSection(
+            blacklisted: blacklisted,
+            onBlacklistedChanged: (v) => onBlacklistedChanged(v),
+            reason: blacklistReason,
+            onReasonSelected: (r) => onReasonSelected(r),
+          ),
+        ),
       ],
     );
   }
@@ -697,19 +743,19 @@ class _AccordionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onToggle,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title row — tappable to expand/collapse.
+          GestureDetector(
+            onTap: onToggle,
+            child: Row(
               children: [
                 Icon(
                   isExpanded ? Icons.expand_less : Icons.chevron_right_rounded,
@@ -728,12 +774,12 @@ class _AccordionSection extends StatelessWidget {
                 ),
               ],
             ),
-            if (isExpanded) ...[
-              const SizedBox(height: 12),
-              child,
-            ],
+          ),
+          if (isExpanded) ...[
+            const SizedBox(height: 12),
+            child,
           ],
-        ),
+        ],
       ),
     );
   }
@@ -1023,6 +1069,68 @@ class _RestaurantNotesSection extends StatelessWidget {
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         hintText: 'e.g. Great ambiance, noisy during lunch rush...',
       ),
+    );
+  }
+}
+
+// -- Section 5: Blacklist (AC-1, AC-2) -----------------------------------------
+
+/// Blacklist toggle with reason category selection.
+class _BlacklistSection extends StatelessWidget {
+  final bool blacklisted;
+  final ValueChanged<bool> onBlacklistedChanged;
+  final String? reason;
+  final ValueChanged<String?> onReasonSelected;
+
+  const _BlacklistSection({
+    required this.blacklisted,
+    required this.onBlacklistedChanged,
+    required this.reason,
+    required this.onReasonSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Blacklist toggle — Switch with onChanged drives state.
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Switch(
+                value: blacklisted,
+                onChanged: (_) => onBlacklistedChanged(!blacklisted),
+              ),
+              const SizedBox(width: 8),
+              Text('Blacklist this visit'),
+            ],
+          ),
+        ),
+
+        // Reason categories — shown only when blacklisted is true.
+        if (blacklisted) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _blacklistReasons.map((category) {
+              final isSelected = reason == category;
+              return ChoiceChip(
+                label: Text(category),
+                selected: isSelected,
+                onSelected: (s) => onReasonSelected(s ? category : null),
+                selectedColor: colorScheme.primaryContainer,
+                labelStyle: TextStyle(
+                  color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ],
     );
   }
 }

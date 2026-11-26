@@ -12,8 +12,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:plated4me/application/providers/visit_list_filter_provider.dart';
+import 'package:plated4me/domain/entities/entities.dart';
 import 'package:plated4me/domain/services/search_service.dart';
 import 'package:plated4me/presentation/extensions/highlight_extension.dart';
+
+/// Suggested blacklist reason categories (AC-2).
+const List<String> _visitDetailBlacklistReasons = [
+  'Poor Food',
+  'Bad Service',
+  'Overpriced',
+  'Allergy Issue',
+  'Other',
+];
 
 /// A card displaying a single visit's key information.
 class VisitCard extends StatelessWidget {
@@ -249,29 +259,95 @@ class _ReturnIntentPill extends StatelessWidget {
   }
 }
 
-/// Placeholder Visit Detail View.
-class VisitDetailView extends StatelessWidget {
+/// Visit Detail View with blacklist toggle (AC-1, AC-2).
+class VisitDetailView extends StatefulWidget {
   const VisitDetailView({super.key});
 
   @override
+  State<VisitDetailView> createState() => _VisitDetailViewState();
+}
+
+class _VisitDetailViewState extends State<VisitDetailView> {
+  bool _blacklisted = false;
+  String? _blacklistReason;
+
+  @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Visit Details')),
-      body: const Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(Icons.restaurant, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'Visit Detail View',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // Blacklist toggle section (AC-1)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => _blacklisted = !_blacklisted),
+                      child: Row(
+                        children: [
+                          Switch(
+                            value: _blacklisted,
+                            onChanged: (_) => setState(() => _blacklisted = !_blacklisted),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('Blacklist this visit'),
+                        ],
+                      ),
+                    ),
+                    if (_blacklisted) ...[
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _visitDetailBlacklistReasons.map((category) {
+                          final isSelected = _blacklistReason == category;
+                          return ChoiceChip(
+                            label: Text(category),
+                            selected: isSelected,
+                            onSelected: (s) => setState(() {
+                              _blacklistReason = s ? category : null;
+                            }),
+                            selectedColor: colorScheme.primaryContainer,
+                            labelStyle: TextStyle(
+                              color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            SizedBox(height: 8),
-            Text(
-              'Full implementation coming in a future story',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+
+            const SizedBox(height: 16),
+
+            // Placeholder for visit details (restaurant name, ratings, etc.)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Visit Details',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Full visit details coming in a future story',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
