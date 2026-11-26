@@ -422,5 +422,97 @@ void main() {
       // The settings screen should render without errors.
       expect(find.byType(SettingsScreen), findsOneWidget);
     });
+
+    // -- AC-5: Blacklist clear — actual SettingsScreen rendering ---------------
+
+    testWidgets('AC-5: SettingsScreen renders "Clear All Blacklisted Visits" button', (tester) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: defaultPrefsContainer,
+          child: const MaterialApp(home: SettingsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The actual SettingsScreen must contain the blacklist clear option.
+      expect(
+        find.text('Clear All Blacklisted Visits'),
+        findsOneWidget,
+        reason: 'AC-5: SettingsScreen must have a "Clear All Blacklisted Visits" button',
+      );
+    });
+
+    testWidgets('AC-5: tapping "Clear All Blacklisted Visits" shows confirmation dialog', (tester) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: defaultPrefsContainer,
+          child: const MaterialApp(home: SettingsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap the clear button.
+      await tester.tap(find.text('Clear All Blacklisted Visits'));
+      await tester.pumpAndSettle();
+
+      // A confirmation dialog must appear.
+      expect(
+        find.textContaining('Confirm'),
+        findsOneWidget,
+        reason: 'AC-5: Confirmation dialog must be shown before bulk deleting blacklisted visits',
+      );
+    });
+
+    testWidgets('AC-5: confirming clear dismisses dialog and shows success feedback', (tester) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: defaultPrefsContainer,
+          child: const MaterialApp(home: SettingsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap the clear button and then confirm.
+      await tester.tap(find.text('Clear All Blacklisted Visits'));
+      await tester.pumpAndSettle();
+
+      // Tap the dialog's "Clear" button (exact match to avoid finding the settings button).
+      await tester.tap(find.text('Clear'));
+      // Allow time for async operations: dialog dismiss, provider update, SnackBar show.
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+
+      // User should get visual feedback that the action completed.
+      expect(
+        find.byType(SnackBar),
+        findsOneWidget,
+        reason: 'AC-5: Success feedback (e.g., SnackBar) must be shown after clearing blacklisted visits',
+      );
+    });
+
+    testWidgets('AC-5: cancelling clear dismisses dialog without error', (tester) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: defaultPrefsContainer,
+          child: const MaterialApp(home: SettingsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap the clear button and then cancel.
+      await tester.tap(find.text('Clear All Blacklisted Visits'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('Cancel').first);
+      await tester.pumpAndSettle();
+
+      // No error snackbar should appear.
+      expect(
+        find.byType(SnackBar),
+        findsNothing,
+        reason: 'AC-5: Cancelling should not produce any error feedback',
+      );
+    });
   });
 }
