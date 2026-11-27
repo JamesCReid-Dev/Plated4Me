@@ -160,22 +160,38 @@ class Visit {
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return Visit(
-        restaurantId: restaurantId ?? this.restaurantId,
-        foodRating: foodRating ?? this.foodRating,
-        valueRating: valueRating ?? this.valueRating,
-        serviceRating: serviceRating ?? this.serviceRating,
-        overallRating: overallRating ?? this.overallRating,
-        compositeScore: compositeScore ?? this.compositeScore,
-        returnIntent: returnIntent ?? this.returnIntent,
-      )
-      ..id = id ?? this.id
+    final copied = Visit._copyFrom(
+      restaurantId: restaurantId ?? this.restaurantId,
+      foodRating: foodRating ?? this.foodRating,
+      valueRating: valueRating ?? this.valueRating,
+      serviceRating: serviceRating ?? this.serviceRating,
+      overallRating: overallRating ?? this.overallRating,
+      compositeScore: compositeScore ?? this.compositeScore,
+      returnIntent: returnIntent ?? this.returnIntent,
+    )..id = id ?? this.id
       ..createdAt = createdAt ?? this.createdAt
       ..updatedAt = updatedAt ?? this.updatedAt
       ..generalNotes = generalNotes ?? this.generalNotes
       ..blacklisted = blacklisted ?? this.blacklisted
       ..blacklistReason = blacklistReason ?? this.blacklistReason;
+    if (occasions != null) {
+      copied.occasions.addAll(occasions);
+    } else {
+      copied.occasions.addAll(this.occasions);
+    }
+    return copied;
   }
+
+  /// Private copy constructor for [copyWith].
+  Visit._copyFrom({
+    required this.restaurantId,
+    required this.foodRating,
+    required this.valueRating,
+    required this.serviceRating,
+    required this.overallRating,
+    required this.compositeScore,
+    required this.returnIntent,
+  });
 
   @override
   String toString() =>
