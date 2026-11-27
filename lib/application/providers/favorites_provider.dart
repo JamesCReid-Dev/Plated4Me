@@ -14,12 +14,14 @@ import 'package:plated4me/domain/entities/entities.dart';
 /// as a separate entity. Manual pin/unpin overrides are persisted to the
 /// Restaurant entity fields [Restaurant.isPinned] / [Restaurant.isUnpinned].
 class FavoritesNotifier extends Notifier<List<Restaurant>> {
-  late final RestaurantDataProvider _restaurants;
+  /// Returns the restaurant data notifier, resolving fresh on each call
+  /// to avoid the LateInitializationError that occurs when build() is
+  /// re-entered during a provider refresh cycle.
+  RestaurantDataProvider _restaurantNotifier() =>
+      ref.read(restaurantDataProvider.notifier);
 
   @override
   List<Restaurant> build() {
-    _restaurants = ref.read(restaurantDataProvider.notifier);
-
     // Watch restaurant data so favorites recompute when it changes.
     ref.watch(restaurantDataProvider);
     ref.watch(visitsDataProvider);
@@ -70,7 +72,7 @@ class FavoritesNotifier extends Notifier<List<Restaurant>> {
       newRestaurant.isUnpinned = false;
     }
 
-    await _restaurants.saveRestaurant(newRestaurant);
+    await _restaurantNotifier().saveRestaurant(newRestaurant);
   }
 }
 
